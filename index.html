@@ -12,14 +12,14 @@
         :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.12); --success: #4CAF50; --warning: #ff9800; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
-        /* HEADER UI */
+        /* HEADER */
         .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
         #sync-pill { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; border: 1px solid var(--border); }
         .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
         .withdraw-btn { background: #ff9800; color: black; font-size: 0.7rem; font-weight: 800; padding: 7px 15px; border-radius: 10px; border: none; cursor: pointer; }
 
         /* SCREENS */
-        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; }
+        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; padding-bottom: 50px; }
         .active-screen { display: block; }
         .card { background: var(--glass); padding: 18px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
 
@@ -28,13 +28,17 @@
         .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); border: 8px solid var(--border); cursor: pointer; user-select: none; transition: transform 0.05s; }
         .circle-btn:active { transform: scale(0.92); }
 
-        /* LISTS */
+        /* REFS & LISTS */
         .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        .task-done { opacity: 0.5; filter: grayscale(1); }
+        .ref-item { display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; font-size: 0.8rem; border: 1px solid var(--border); }
+        
+        /* ROADMAP */
+        .step { border-left: 2px solid var(--border); padding-left: 15px; margin-bottom: 15px; position: relative; }
+        .step.active { border-left-color: var(--accent); }
 
-        /* NAV */
+        /* NAVIGATION */
         .dock { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 1000; }
-        .dock-item { opacity: 0.4; font-size: 0.6rem; text-align: center; color: white; flex: 1; cursor: pointer; }
+        .dock-item { opacity: 0.4; font-size: 0.55rem; text-align: center; color: white; flex: 1; cursor: pointer; }
         .dock-item.active { opacity: 1; color: var(--accent); font-weight: bold; }
     </style>
 </head>
@@ -42,7 +46,7 @@
 
     <div class="header-ui">
         <div id="sync-pill"><div class="dot" id="sync-dot"></div><span id="sync-text">SYNCED ✓</span></div>
-        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawals open Q3 2026 after Listing.')">WITHDRAW</button>
+        <button class="withdraw-btn" onclick="tg.showAlert('Listing expected Q3 2026.')">WITHDRAW</button>
     </div>
 
     <div id="tab-mine" class="screen active-screen">
@@ -56,36 +60,62 @@
         <div id="task-list"></div>
     </div>
 
+    <div id="tab-friends" class="screen">
+        <h3>Invite Friends</h3>
+        <div class="card" style="text-align:center; border-color: var(--accent);">
+            <p style="font-size:0.9rem; margin-bottom:15px;">Get <b>50,000 $TRU</b> per successful invite!</p>
+            <button class="withdraw-btn" style="width:100%; padding:15px;" onclick="shareInvite()">INVITE A FRIEND</button>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <b>Your Referrals</b>
+                <b style="color:var(--accent)" id="ref-count">0 Users</b>
+            </div>
+            <div id="ref-list">
+                <p style="text-align:center; opacity:0.4; font-size:0.75rem; padding:20px;">No friends invited yet.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="tab-skins" class="screen">
         <h3>Skins Shop</h3>
         <div id="skin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
     </div>
 
     <div id="tab-drop" class="screen">
-        <h3>Tokenomics & Drop</h3>
-        <div class="card" style="text-align:center; border-color:var(--warning)">
-            <small style="color:var(--warning)">LISTING IN</small>
-            <div id="timer" style="font-size:1.6rem; font-weight:bold; margin:10px 0; font-family:monospace;">00:00:00:00</div>
+        <h3>Airdrop & Roadmap</h3>
+        
+        <div class="card" style="border-color:var(--warning)">
+            <b style="color:var(--warning)">Allocation Checklist</b>
+            <div class="stat-row"><span>Mined Tokens</span><span id="drop-mined">0</span></div>
+            <div class="stat-row"><span>Total Referrals</span><span id="drop-refs">0</span></div>
+            <div class="stat-row"><span>Skins Owned</span><span id="drop-skins">1</span></div>
+            <div class="stat-row"><span>Daily Streak</span><span>1 Day</span></div>
         </div>
+
         <div class="card">
-            <b>Project Details</b>
-            <div class="stat-row"><span>Token Name</span><span>TruLegend</span></div>
-            <div class="stat-row"><span>Symbol</span><span style="color:var(--accent)">$TRU</span></div>
+            <b>The Road to $TRU</b>
+            <div style="margin-top:15px;">
+                <div class="step active"><small style="color:var(--accent)">Q1 2026</small><br>Community Mining & Growth</div>
+                <div class="step"><small>Q2 2026</small><br>Wallet Connect & Tokenomics Reveal</div>
+                <div class="step"><small>Q3 2026</small><br>TGE & Exchange Listing (Airdrop)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <b>Token Distribution</b>
             <div class="stat-row"><span>Total Supply</span><span>1,000,000,000</span></div>
-            <div class="stat-row"><span>Network</span><span>TON Blockchain</span></div>
+            <div class="stat-row"><span>Community Pool</span><span style="color:var(--success)">75%</span></div>
+            <div class="stat-row"><span>Liquidity/Team</span><span>25%</span></div>
         </div>
-        <div class="card">
-            <b>Distribution</b>
-            <div class="stat-row"><span>Airdrop Rewards</span><span style="color:var(--success)">75%</span></div>
-            <div class="stat-row"><span>Liquidity</span><span>15%</span></div>
-            <div class="stat-row"><span>Team Locked</span><span>10%</span></div>
-        </div>
-        <button style="background:var(--accent); color:white; border:none; width:100%; padding:15px; border-radius:15px; font-weight:bold;" onclick="tg.showAlert('TON Connect opens Q2 2026')">CONNECT TON WALLET</button>
+        <button style="background:var(--accent); color:white; border:none; width:100%; padding:15px; border-radius:15px; font-weight:bold;" onclick="tg.showAlert('TON Connector coming in Q2')">CONNECT WALLET</button>
     </div>
 
     <div class="dock">
         <div class="dock-item active" onclick="switchTab('mine', this)">⛏️<br>MINE</div>
         <div class="dock-item" onclick="switchTab('tasks', this)">📋<br>TASKS</div>
+        <div class="dock-item" onclick="switchTab('friends', this)">👥<br>FRIENDS</div>
         <div class="dock-item" onclick="switchTab('skins', this)">🎨<br>SKINS</div>
         <div class="dock-item" onclick="switchTab('drop', this)">💰<br>DROP</div>
     </div>
@@ -108,36 +138,34 @@
 
         let state = {
             id: tg.initDataUnsafe?.user?.id || "dev_user",
-            balance: 0, energy: 1000, equippedSkin: '💎', ownedSkins: ['💎'], tasks: {}
+            balance: 0, energy: 1000, equippedSkin: '💎', ownedSkins: ['💎'], tasks: {}, referredUsers: []
         };
 
         const skins = [
-            { icon: '💎', name: 'Original', price: 0 },
-            { icon: '📀', name: 'Silver', price: 10000 },
-            { icon: '🟡', name: 'Gold', price: 50000 },
-            { icon: '🔥', name: 'Inferno', price: 250000 }
+            { icon: '💎', p: 0 }, { icon: '📀', p: 10000 }, { icon: '🟡', p: 50000 }, { icon: '🔥', p: 250000 }
         ];
 
-        const availableTasks = [
-            { id: 'tg_join', title: 'Join TruLegend Channel', reward: 50000, url: 'https://t.me/yourlink' },
-            { id: 'x_follow', title: 'Follow on X', reward: 20000, url: 'https://x.com/yourlink' }
+        const tasks = [
+            { id: 'join_tg', title: 'Join Channel', reward: 50000, url: 'https://t.me/your_channel' },
+            { id: 'follow_x', title: 'Follow on X', reward: 25000, url: 'https://x.com/your_x' }
         ];
 
         function init() {
-            db.ref('users/' + state.id).once('value', (s) => {
+            db.ref('users/' + state.id).on('value', (s) => {
                 if(s.exists()) state = {...state, ...s.val()};
                 if(!state.tasks) state.tasks = {};
+                if(!state.referredUsers) state.referredUsers = [];
                 updateUI();
                 renderSkins();
                 renderTasks();
-                startCountdown();
+                renderFriends();
             });
         }
 
         function save() {
             const status = document.getElementById('sync-text');
             const dot = document.getElementById('sync-dot');
-            status.innerText = "SAVING...";
+            status.innerText = "SYNCING...";
             dot.style.background = "var(--warning)";
             db.ref('users/' + state.id).update(state).then(() => {
                 setTimeout(() => {
@@ -147,17 +175,31 @@
             });
         }
 
+        function shareInvite() {
+            const botName = "TruLegendBot"; // Replace with your bot username
+            const link = `https://t.me/${botName}?start=${state.id}`;
+            const text = "💎 Come mine $TRU with me! 50k bonus inside!";
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+        }
+
+        function renderFriends() {
+            const list = document.getElementById('ref-list');
+            const friends = state.referredUsers || [];
+            document.getElementById('ref-count').innerText = `${friends.length} Users`;
+            if (friends.length > 0) {
+                list.innerHTML = friends.map(f => `<div class="ref-item"><span>👤 User_${f.toString().slice(-5)}</span><span style="color:var(--success)">+50,000</span></div>`).join('');
+            }
+        }
+
         function renderTasks() {
-            const list = document.getElementById('task-list');
-            list.innerHTML = '';
-            availableTasks.forEach(t => {
-                const done = state.tasks[t.id];
-                list.innerHTML += `
-                    <div class="card ${done ? 'task-done' : ''}" style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><b>${t.title}</b><br><small style="color:var(--success)">+${t.reward/1000}k $TRU</small></div>
-                        <button class="withdraw-btn" style="background:${done ? '#444' : 'var(--accent)'}" 
-                        onclick="doTask('${t.id}', '${t.url}', ${t.reward})">${done ? 'CLAIMED' : 'GO'}</button>
-                    </div>`;
+            const container = document.getElementById('task-list');
+            container.innerHTML = '';
+            tasks.forEach(t => {
+                const isDone = state.tasks[t.id];
+                container.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; ${isDone ? 'opacity:0.5' : ''}">
+                    <div><b>${t.title}</b><br><small>+${t.reward.toLocaleString()}</small></div>
+                    <button class="withdraw-btn" style="background:${isDone ? '#444' : 'var(--accent)'}" onclick="doTask('${t.id}', '${t.url}', ${t.reward})">${isDone ? 'DONE' : 'GO'}</button>
+                </div>`;
             });
         }
 
@@ -166,31 +208,27 @@
             tg.openLink(url);
             state.balance += reward;
             state.tasks[id] = true;
-            save(); updateUI(); renderTasks();
+            save();
         }
 
         function renderSkins() {
             const grid = document.getElementById('skin-grid');
             grid.innerHTML = '';
             skins.forEach(s => {
-                const owned = (state.ownedSkins || ['💎']).includes(s.icon);
+                const owned = state.ownedSkins.includes(s.icon);
                 const active = state.equippedSkin === s.icon;
-                grid.innerHTML += `
-                    <div class="card" style="text-align:center; padding:10px; ${active ? 'border-color:var(--accent)' : ''}">
-                        <div style="font-size:2.5rem">${s.icon}</div>
-                        <button class="withdraw-btn" style="width:100%; margin-top:10px; background:${active ? 'var(--success)' : (owned ? '#555' : 'var(--accent)')}" 
-                        onclick="${owned ? `setSkin('${s.icon}')` : `buySkin('${s.icon}', ${s.price})`}">
-                        ${active ? 'ACTIVE' : (owned ? 'USE' : s.price/1000+'k')}</button>
-                    </div>`;
+                grid.innerHTML += `<div class="card" style="text-align:center; ${active ? 'border-color:var(--accent)' : ''}">
+                    <div style="font-size:2.5rem">${s.icon}</div>
+                    <button class="withdraw-btn" style="width:100%; margin-top:10px; background:${active ? 'var(--success)' : (owned ? '#555' : 'var(--accent)')}" 
+                    onclick="${owned ? `setSkin('${s.icon}')` : `buySkin('${s.icon}', ${s.p})`}">${active ? 'ACTIVE' : (owned ? 'USE' : s.p/1000+'k')}</button>
+                </div>`;
             });
         }
 
-        function setSkin(icon) { state.equippedSkin = icon; save(); renderSkins(); updateUI(); }
-        function buySkin(icon, price) {
-            if(state.balance >= price) { state.balance -= price; state.ownedSkins.push(icon); save(); renderSkins(); updateUI(); }
-        }
+        function setSkin(icon) { state.equippedSkin = icon; save(); }
+        function buySkin(icon, price) { if(state.balance >= price) { state.balance -= price; state.ownedSkins.push(icon); save(); } }
 
-        document.getElementById('tap-btn').addEventListener('pointerdown', () => {
+        document.getElementById('tap-btn').addEventListener('pointerdown', (e) => {
             if(state.energy >= 1) {
                 state.balance += 1;
                 state.energy -= 1;
@@ -203,19 +241,9 @@
             document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
             document.getElementById('tap-btn').innerText = state.equippedSkin;
-        }
-
-        function startCountdown() {
-            const target = new Date("2026-07-01T00:00:00").getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const d = target - now;
-                const days = Math.floor(d / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const mins = Math.floor((d % (1000 * 60 * 60)) / (1000 * 60));
-                const secs = Math.floor((d % (1000 * 60)) / 1000);
-                document.getElementById('timer').innerText = `${days}d ${hours}h ${mins}m ${secs}s`;
-            }, 1000);
+            document.getElementById('drop-mined').innerText = Math.floor(state.balance).toLocaleString();
+            document.getElementById('drop-refs').innerText = (state.referredUsers || []).length;
+            document.getElementById('drop-skins').innerText = (state.ownedSkins || []).length;
         }
 
         function switchTab(t, el) {
@@ -225,7 +253,7 @@
             el.classList.add('active');
         }
 
-        setInterval(() => { if(state.energy < 1000) state.energy += 5; save(); updateUI(); }, 5000);
+        setInterval(() => { if(state.energy < 1000) { state.energy += 5; updateUI(); save(); } }, 5000);
         init();
     </script>
 </body>
