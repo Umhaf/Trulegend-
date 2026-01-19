@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRULEGEND: Pro Edition</title>
+    <title>TRULEGEND: Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -12,19 +12,23 @@
         :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.1); }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
+        /* Layout */
         .screen { display: none; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 120px; }
         .active-screen { display: flex; flex-direction: column; }
-
         .card { background: var(--glass); padding: 15px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
-        .balance { font-size: 3.2rem; font-weight: 900; text-align: center; margin: 5px 0; color: #fff; text-shadow: 0 0 20px rgba(0, 136, 204, 0.6); }
         
-        /* Floating Animation */
-        .tap-anim { position: absolute; color: white; font-weight: 900; font-size: 1.5rem; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 1000; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        /* Stats */
+        .balance { font-size: 3.2rem; font-weight: 900; text-align: center; margin: 5px 0; color: #fff; text-shadow: 0 0 20px rgba(0, 136, 204, 0.6); }
+        .sync-status { font-size: 0.6rem; opacity: 0.5; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; }
+        .dot { width: 6px; height: 6px; background: #4CAF50; border-radius: 50%; display: inline-block; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
 
         /* Tapper */
-        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 40px auto; display: flex; align-items: center; justify-content: center; font-size: 5.5rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); transition: transform 0.1s; cursor: pointer; border: 6px solid rgba(255,255,255,0.1); }
+        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 5.5rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); transition: transform 0.1s; cursor: pointer; border: 6px solid rgba(255,255,255,0.1); user-select: none; -webkit-tap-highlight-color: transparent; }
         .circle-btn:active { transform: scale(0.95); }
+        .tap-anim { position: absolute; color: white; font-weight: 900; font-size: 1.5rem; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 1000; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
 
         /* Navigation */
         .dock { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,11,0.95); display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
@@ -32,36 +36,40 @@
         .dock-item.active { opacity: 1; color: var(--accent); }
         
         .btn-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: bold; width: 100%; cursor: pointer; }
-        .btn-copy { background: #222; border: 1px solid #444; color: white; padding: 14px; border-radius: 14px; width: 80px; cursor: pointer; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .multiplier-badge { background: #ff9800; color: black; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <div id="tab-mine" class="screen active-screen">
-        <center><small style="opacity: 0.6; letter-spacing: 2px;">YOUR TRU BALANCE</small></center>
+        <center>
+            <span id="lvl-name" style="color:var(--accent); font-weight:bold; font-size:0.8rem;">LOADING...</span>
+            <span class="multiplier-badge" id="multi-ui">1x</span>
+            <div class="sync-status"><span id="sync-dot" class="dot"></span> <span id="sync-text">SYNCED</span></div>
+        </center>
         <div class="balance" id="balance">0</div>
         <div style="text-align: center; margin-bottom: 10px;">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
         <div class="circle-btn" id="tap-btn">💎</div>
+        <center style="opacity:0.5; font-size:0.8rem;">Tap Power: +<span id="tap-power-ui">1</span></center>
     </div>
 
     <div id="tab-rewards" class="screen">
         <h3>Friends</h3>
         <div class="card">
-            <p>Earn 20,000 TRU for every friend invited!</p>
+            <p>Invite friends for 20,000 TRU bonus!</p>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-main" onclick="inviteFriend()">INVITE FRIEND</button>
-                <button class="btn-copy" onclick="copyLink()">COPY</button>
+                <button class="btn-main" onclick="inviteFriend()">INVITE</button>
+                <button class="btn-main" style="background:#222; width:80px;" onclick="copyLink()">COPY</button>
             </div>
         </div>
         <div class="card">
-            <div class="item-row"><span>Total Invites:</span> <b id="ref-count" style="color:var(--accent)">0</b></div>
+            <div style="display:flex; justify-content:space-between;"><span>Total Referrals:</span> <b id="ref-count">0</b></div>
         </div>
     </div>
 
     <div id="tab-lead" class="screen">
-        <h3>Top Players</h3>
-        <div class="card" id="lead-list">Loading ranking...</div>
+        <h3>Leaderboard</h3>
+        <div class="card" id="lead-list">Loading...</div>
     </div>
 
     <div class="dock">
@@ -73,8 +81,8 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
 
-        // --- EDIT YOUR BOT NAME HERE ---
         const BOT_USERNAME = "trulegendbot"; 
 
         const config = {
@@ -95,24 +103,34 @@
             balance: 0,
             energy: 1000,
             maxEnergy: 1000,
-            tapPower: 1,
-            referrals: 0
+            referrals: 0,
+            lvl: "BRONZE STARTER"
         };
 
-        let localBalance = 0; // The "Safe" balance for the UI
+        let localBalance = 0;
+        let currentTapPower = 1;
 
         function init() {
             db.ref('users/' + state.id).once('value', (s) => {
                 if(s.exists()) {
                     state = {...state, ...s.val()};
                     localBalance = state.balance;
+                    checkBackup(); 
                 } else {
                     handleReferral();
                     save();
                 }
+                calculateMultiplier();
                 updateUI();
             });
             loadLead();
+        }
+
+        function calculateMultiplier() {
+            if (localBalance >= 250000) { currentTapPower = 10; state.lvl = "ELITE WHALE"; }
+            else if (localBalance >= 50000) { currentTapPower = 5; state.lvl = "GOLD MINER"; }
+            else if (localBalance >= 5000) { currentTapPower = 2; state.lvl = "SILVER TAPPER"; }
+            else { currentTapPower = 1; state.lvl = "BRONZE STARTER"; }
         }
 
         function handleReferral() {
@@ -120,31 +138,30 @@
             if (refId && refId !== state.id.toString()) {
                 db.ref('users/' + refId).child('referrals').transaction(c => (c || 0) + 1);
                 db.ref('users/' + refId).child('balance').transaction(b => (b || 0) + 20000);
-                state.balance = 5000;
-                localBalance = 5000;
+                state.balance = 5000; localBalance = 5000;
             }
         }
 
-        // --- TAP BUTTON LOGIC (Fixed for Fast Tapping) ---
         document.getElementById('tap-btn').addEventListener('pointerdown', (e) => {
-            if(state.energy >= state.tapPower) {
-                // Update screen instantly
-                localBalance += state.tapPower;
+            if(state.energy >= currentTapPower) {
+                localBalance += currentTapPower;
                 state.balance = localBalance;
-                state.energy -= state.tapPower;
-                
+                state.energy -= currentTapPower;
+                calculateMultiplier();
                 createTapAnim(e.clientX, e.clientY);
                 updateUI();
                 if(navigator.vibrate) navigator.vibrate(10);
+                
+                // Visual sync feedback
+                document.getElementById('sync-text').innerText = "UNSAVED TAPS...";
+                document.getElementById('sync-dot').style.background = "#ff9800";
             }
         });
 
         function createTapAnim(x, y) {
             const el = document.createElement('div');
-            el.className = 'tap-anim';
-            el.innerText = `+${state.tapPower}`;
-            el.style.left = x + 'px';
-            el.style.top = (y - 50) + 'px';
+            el.className = 'tap-anim'; el.innerText = `+${currentTapPower}`;
+            el.style.left = x + 'px'; el.style.top = (y - 50) + 'px';
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 800);
         }
@@ -153,12 +170,15 @@
             document.getElementById('balance').innerText = Math.floor(localBalance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
             document.getElementById('max-energy').innerText = state.maxEnergy;
+            document.getElementById('multi-ui').innerText = currentTapPower + "x";
+            document.getElementById('tap-power-ui').innerText = currentTapPower;
+            document.getElementById('lvl-name').innerText = state.lvl;
             document.getElementById('ref-count').innerText = state.referrals || 0;
         }
 
         function inviteFriend() {
             const link = `https://t.me/${BOT_USERNAME}?startapp=${state.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join TRULEGEND and mine with me!`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me on TRULEGEND!`);
         }
 
         function copyLink() {
@@ -167,18 +187,16 @@
             el.value = link; document.body.appendChild(el);
             el.select(); document.execCommand('copy');
             document.body.removeChild(el);
-            tg.showAlert("Referral link copied! ✅");
+            tg.showAlert("Link copied! ✅");
         }
 
         function loadLead() {
             db.ref('users').orderByChild('balance').limitToLast(10).on('value', (snap) => {
-                const list = document.getElementById('lead-list');
-                list.innerHTML = "";
-                let players = [];
-                snap.forEach(c => { players.push({...c.val(), id: c.key}); });
+                const list = document.getElementById('lead-list'); list.innerHTML = "";
+                let players = []; snap.forEach(c => { players.push({...c.val(), id: c.key}); });
                 players.reverse().forEach((p, i) => {
-                    const highlight = p.id == state.id ? "border: 1px solid var(--accent); background:rgba(0,136,204,0.1);" : "";
-                    list.innerHTML += `<div class="item-row" style="${highlight} padding:8px; border-radius:10px;">
+                    const highlight = p.id == state.id ? "background:rgba(0,136,204,0.1); border:1px solid var(--accent);" : "";
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-radius:10px; margin-bottom:5px; ${highlight}">
                         <span>#${i+1} ${p.name}</span>
                         <b>${Math.floor(p.balance).toLocaleString()}</b>
                     </div>`;
@@ -193,20 +211,49 @@
             el.classList.add('active');
         }
 
-        // --- TRANSACTION SAVE (Prevents Resets) ---
+        // --- 🛡️ THE SAFETY SYSTEM ---
         function save() {
+            document.getElementById('sync-dot').classList.add('blink');
             db.ref('users/' + state.id).transaction((current) => {
                 if (current) {
                     current.balance = Math.max(current.balance, state.balance);
                     current.energy = state.energy;
+                    current.lvl = state.lvl;
                     current.referrals = state.referrals || 0;
                     return current;
                 }
                 return state;
+            }, (err, commit) => {
+                document.getElementById('sync-dot').classList.remove('blink');
+                if(commit) {
+                    document.getElementById('sync-text').innerText = "SYNCED";
+                    document.getElementById('sync-dot').style.background = "#4CAF50";
+                }
             });
+            localStorage.setItem('tru_backup_' + state.id, JSON.stringify({
+                balance: localBalance,
+                energy: state.energy,
+                lvl: state.lvl
+            }));
         }
 
-        // Auto-save and refill energy every 3 seconds
+        function checkBackup() {
+            const backup = localStorage.getItem('tru_backup_' + state.id);
+            if (backup) {
+                const data = JSON.parse(backup);
+                if (data.balance > localBalance) {
+                    localBalance = data.balance;
+                    state.balance = data.balance;
+                    state.energy = data.energy;
+                    state.lvl = data.lvl;
+                }
+            }
+        }
+
+        window.addEventListener('pause', save);
+        window.addEventListener('blur', save);
+        window.addEventListener('beforeunload', save);
+
         setInterval(() => {
             if(state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.energy + 2, state.maxEnergy);
