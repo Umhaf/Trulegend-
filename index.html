@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRULEGEND: Universal</title>
+    <title>TRULEGEND: Pro Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -15,7 +15,6 @@
         .screen { display: none; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 120px; }
         .active-screen { display: flex; flex-direction: column; }
 
-        /* UI Styling */
         .card { background: var(--glass); padding: 15px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
         .balance { font-size: 3.2rem; font-weight: 900; text-align: center; margin: 5px 0; color: #fff; text-shadow: 0 0 20px rgba(0, 136, 204, 0.6); }
         
@@ -25,53 +24,44 @@
 
         /* Tapper */
         .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 40px auto; display: flex; align-items: center; justify-content: center; font-size: 5.5rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); transition: transform 0.1s; cursor: pointer; border: 6px solid rgba(255,255,255,0.1); }
-        .circle-btn:active { transform: scale(0.92); }
+        .circle-btn:active { transform: scale(0.95); }
 
-        /* Rows */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-
-        /* Navigation Dock */
+        /* Navigation */
         .dock { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,11,0.95); display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
         .dock-item { opacity: 0.4; font-size: 0.65rem; text-align: center; color: white; flex: 1; cursor: pointer; }
         .dock-item.active { opacity: 1; color: var(--accent); }
         
-        /* Buttons */
-        .btn-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; }
-        .btn-copy { background: #222; color: white; border: 1px solid #444; padding: 14px; border-radius: 14px; font-weight: bold; cursor: pointer; width: 80px; }
+        .btn-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: bold; width: 100%; cursor: pointer; }
+        .btn-copy { background: #222; border: 1px solid #444; color: white; padding: 14px; border-radius: 14px; width: 80px; cursor: pointer; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <div id="tab-mine" class="screen active-screen">
-        <center><small style="opacity: 0.6; letter-spacing: 2px;">TOTAL BALANCE</small></center>
+        <center><small style="opacity: 0.6; letter-spacing: 2px;">YOUR TRU BALANCE</small></center>
         <div class="balance" id="balance">0</div>
         <div style="text-align: center; margin-bottom: 10px;">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
         <div class="circle-btn" id="tap-btn">💎</div>
-        <center style="margin-top: 20px; opacity: 0.5;">Tap Power: +<span id="tap-val">1</span></center>
     </div>
 
     <div id="tab-rewards" class="screen">
-        <h3>Invite Friends</h3>
+        <h3>Friends</h3>
         <div class="card">
-            <p style="font-size: 0.9rem; opacity: 0.8;">You get <b>20,000 TRU</b> for every friend. They get 5,000 bonus!</p>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-main" onclick="inviteFriend()">INVITE A FRIEND</button>
+            <p>Earn 20,000 TRU for every friend invited!</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-main" onclick="inviteFriend()">INVITE FRIEND</button>
                 <button class="btn-copy" onclick="copyLink()">COPY</button>
             </div>
         </div>
-        
-        <h3>Stats</h3>
         <div class="card">
-            <div class="item-row">
-                <span>Total Referrals</span>
-                <b id="ref-count" style="color: var(--accent);">0</b>
-            </div>
+            <div class="item-row"><span>Total Invites:</span> <b id="ref-count" style="color:var(--accent)">0</b></div>
         </div>
     </div>
 
     <div id="tab-lead" class="screen">
-        <h3>Global Ranking</h3>
-        <div class="card" id="lead-list">Loading...</div>
+        <h3>Top Players</h3>
+        <div class="card" id="lead-list">Loading ranking...</div>
     </div>
 
     <div class="dock">
@@ -84,7 +74,7 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // --- CONFIG ---
+        // --- EDIT YOUR BOT NAME HERE ---
         const BOT_USERNAME = "trulegendbot"; 
 
         const config = {
@@ -109,33 +99,40 @@
             referrals: 0
         };
 
+        let localBalance = 0; // The "Safe" balance for the UI
+
         function init() {
-            db.ref('users/' + state.id).on('value', (s) => {
+            db.ref('users/' + state.id).once('value', (s) => {
                 if(s.exists()) {
                     state = {...state, ...s.val()};
-                    updateUI();
+                    localBalance = state.balance;
                 } else {
                     handleReferral();
                     save();
                 }
+                updateUI();
             });
             loadLead();
         }
 
         function handleReferral() {
-            // This format works with the t.me/bot?startapp=id links
             const refId = tg.initDataUnsafe?.start_param;
             if (refId && refId !== state.id.toString()) {
                 db.ref('users/' + refId).child('referrals').transaction(c => (c || 0) + 1);
                 db.ref('users/' + refId).child('balance').transaction(b => (b || 0) + 20000);
-                state.balance += 5000; // Bonus for the new player
+                state.balance = 5000;
+                localBalance = 5000;
             }
         }
 
+        // --- TAP BUTTON LOGIC (Fixed for Fast Tapping) ---
         document.getElementById('tap-btn').addEventListener('pointerdown', (e) => {
             if(state.energy >= state.tapPower) {
-                state.balance += state.tapPower;
+                // Update screen instantly
+                localBalance += state.tapPower;
+                state.balance = localBalance;
                 state.energy -= state.tapPower;
+                
                 createTapAnim(e.clientX, e.clientY);
                 updateUI();
                 if(navigator.vibrate) navigator.vibrate(10);
@@ -153,57 +150,39 @@
         }
 
         function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
+            document.getElementById('balance').innerText = Math.floor(localBalance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
             document.getElementById('max-energy').innerText = state.maxEnergy;
             document.getElementById('ref-count').innerText = state.referrals || 0;
-            document.getElementById('tap-val').innerText = state.tapPower;
         }
 
         function inviteFriend() {
             const link = `https://t.me/${BOT_USERNAME}?startapp=${state.id}`;
-            const text = encodeURIComponent("🚀 Start mining TRU tokens with me!");
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join TRULEGEND and mine with me!`);
         }
 
         function copyLink() {
             const link = `https://t.me/${BOT_USERNAME}?startapp=${state.id}`;
             const el = document.createElement('textarea');
-            el.value = link;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
+            el.value = link; document.body.appendChild(el);
+            el.select(); document.execCommand('copy');
             document.body.removeChild(el);
-            tg.showAlert("Link copied! Share it with friends. ✅");
+            tg.showAlert("Referral link copied! ✅");
         }
 
         function loadLead() {
-            db.ref('users').orderByChild('balance').on('value', (snap) => {
+            db.ref('users').orderByChild('balance').limitToLast(10).on('value', (snap) => {
                 const list = document.getElementById('lead-list');
                 list.innerHTML = "";
                 let players = [];
                 snap.forEach(c => { players.push({...c.val(), id: c.key}); });
-                players.sort((a,b) => b.balance - a.balance);
-
-                players.slice(0, 10).forEach((p, i) => {
-                    const isMe = p.id == state.id ? "background: rgba(0, 136, 204, 0.2); border: 1px solid var(--accent);" : "";
-                    list.innerHTML += `
-                        <div class="item-row" style="${isMe} padding: 10px; border-radius: 12px; margin-bottom: 5px;">
-                            <span>#${i+1} ${p.name} ${p.id == state.id ? '<b>(You)</b>' : ''}</span>
-                            <b style="color: var(--accent);">${Math.floor(p.balance).toLocaleString()}</b>
-                        </div>`;
+                players.reverse().forEach((p, i) => {
+                    const highlight = p.id == state.id ? "border: 1px solid var(--accent); background:rgba(0,136,204,0.1);" : "";
+                    list.innerHTML += `<div class="item-row" style="${highlight} padding:8px; border-radius:10px;">
+                        <span>#${i+1} ${p.name}</span>
+                        <b>${Math.floor(p.balance).toLocaleString()}</b>
+                    </div>`;
                 });
-
-                const myRank = players.findIndex(p => p.id == state.id) + 1;
-                if (myRank > 10) {
-                    list.innerHTML += `
-                        <div style="margin-top: 15px; border-top: 1px dashed #444; padding-top: 10px;">
-                            <div class="item-row" style="background: rgba(0, 136, 204, 0.1); padding: 10px; border-radius: 12px;">
-                                <span>#${myRank} ${state.name} <b>(You)</b></span>
-                                <b style="color: var(--accent);">${Math.floor(state.balance).toLocaleString()}</b>
-                            </div>
-                        </div>`;
-                }
             });
         }
 
@@ -214,11 +193,23 @@
             el.classList.add('active');
         }
 
-        function save() { db.ref('users/' + state.id).update(state); }
-        
+        // --- TRANSACTION SAVE (Prevents Resets) ---
+        function save() {
+            db.ref('users/' + state.id).transaction((current) => {
+                if (current) {
+                    current.balance = Math.max(current.balance, state.balance);
+                    current.energy = state.energy;
+                    current.referrals = state.referrals || 0;
+                    return current;
+                }
+                return state;
+            });
+        }
+
+        // Auto-save and refill energy every 3 seconds
         setInterval(() => {
             if(state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.energy + 1, state.maxEnergy);
+                state.energy = Math.min(state.energy + 2, state.maxEnergy);
                 updateUI();
             }
             save();
