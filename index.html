@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRULEGEND Elite</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --background: oklch(0.1 0.01 60);
+            --foreground: oklch(0.98 0.005 90);
+            --accent: oklch(0.6 0.25 20); 
+            --accent-glow: oklch(0.6 0.25 20 / 0.4);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-thick: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: 'Geist', -apple-system, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Animated Mesh Background */
+        .mesh {
+            position: fixed; inset: 0; z-index: -1;
+            background-image: radial-gradient(at 0% 0%, oklch(0.6 0.25 20 / 0.15) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, oklch(0.5 0.2 250 / 0.1) 0px, transparent 50%);
+            filter: blur(80px);
+            animation: drift 15s infinite alternate ease-in-out;
+        }
+        @keyframes drift { from { transform: scale(1); } to { transform: scale(1.1) translate(2%, 2%); } }
+
+        /* Top Bar */
+        .top-nav {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-pill {
+            background: var(--glass-thick);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Centered Mining Core */
+        .mining-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+        .balance-value {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            text-shadow: 0 0 40px var(--accent-glow);
+        }
+        .main-btn {
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #8a0000);
+            border-radius: 50%;
+            box-shadow: 0 0 80px var(--accent-glow), inset -15px -15px 40px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .main-btn:active { transform: scale(0.9); }
+        .main-btn::after {
+            content: ''; position: absolute; inset: -10px;
+            border: 2px solid var(--accent);
+            border-radius: 50%; opacity: 0.3;
+        }
+
+        /* Bottom Nav Dock */
+        .nav-dock {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 15px 10px 30px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .nav-item.active { opacity: 1; color: var(--accent); }
+        .nav-icon { font-size: 1.5rem; }
+
+        /* Referral Card */
+        .referral-card {
+            background: var(--glass-thick);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            display: none; /* Shown via JS */
+        }
+        .copy-link {
+            background: var(--accent);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        /* Floating Text */
+        .tap-anim {
+            position: absolute;
+            color: white;
+            font-weight: 800;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: float 0.7s ease-out forwards;
+        }
+        @keyframes float { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+    </style>
+</head>
+<body>
+    <div class="mesh"></div>
+
+    <div class="top-nav">
+        <div class="user-pill" id="user-display">👤 Guest</div>
+        <div class="user-pill">⚡ <span id="energy-val">1000</span></div>
+    </div>
+
+    <div id="tab-mine" class="mining-container">
+        <div class="balance-value" id="balance">0</div>
+        <div class="main-btn" id="mine-trigger">
+            <span style="font-size: 6rem;">⛏️</span>
+        </div>
+        <div class="user-pill">Rank: <span id="rank-name">Cadet</span></div>
+    </div>
+
+    <div id="tab-friends" class="referral-card">
+        <h2 style="margin: 0;">Invite Friends</h2>
+        <p style="opacity: 0.6;">Earn 5,000 TRU for every recruit</p>
+        <div style="font-size: 2rem; margin: 20px 0;">🎁</div>
+        <div class="copy-link" onclick="copyRefLink()">Copy Referral Link</div>
+        <p id="ref-status" style="font-size: 0.8rem; margin-top: 10px; color: #2ecc71;"></p>
+    </div>
+
+    <div class="nav-dock">
+        <div class="nav-item active" onclick="showTab('mine')">
+            <span class="nav-icon">🌋</span>
+            <span>Mine</span>
+        </div>
+        <div class="nav-item" onclick="showTab('friends')">
+            <span class="nav-icon">👥</span>
+            <span>Friends</span>
+        </div>
+        <div class="nav-item" onclick="window.Telegram.WebApp.close()">
+            <span class="nav-icon">🚪</span>
+            <span>Exit</span>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        let state = {
+            balance: 0,
+            energy: 1000,
+            userId: tg.initDataUnsafe?.user?.id || "0000",
+            userName: tg.initDataUnsafe?.user?.first_name || "Guest"
+        };
+
+        // Initialize UI
+        document.getElementById('user-display').innerText = `👤 ${state.userName}`;
+
+        // Mining Logic
+        document.getElementById('mine-trigger').addEventListener('pointerdown', (e) => {
+            if (state.energy > 0) {
+                state.balance += 1;
+                state.energy -= 1;
+                updateUI();
+                spawnAnim(e.clientX, e.clientY);
+                if (navigator.vibrate) navigator.vibrate(5);
+            }
+        });
+
+        function updateUI() {
+            document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
+            document.getElementById('energy-val').innerText = state.energy;
+            
+            const rank = state.balance > 10000 ? "Elite" : (state.balance > 1000 ? "Pro" : "Cadet");
+            document.getElementById('rank-name').innerText = rank;
+        }
+
+        // Tab Switching
+        function showTab(tab) {
+            document.getElementById('tab-mine').style.display = tab === 'mine' ? 'flex' : 'none';
+            document.getElementById('tab-friends').style.display = tab === 'friends' ? 'block' : 'none';
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // Referral System
+        function copyRefLink() {
+            // Replace 'YourBotName' with the username you gave @BotFather
+            const botUsername = "TRULEGENDBOT"; 
+            const link = `https://t.me/${botUsername}?start=${state.userId}`;
+            
+            navigator.clipboard.writeText(link);
+            document.getElementById('ref-status').innerText = "Link copied to clipboard!";
+            setTimeout(() => document.getElementById('ref-status').innerText = "", 3000);
+        }
+
+        function spawnAnim(x, y) {
+            const el = document.createElement('div');
+            el.className = 'tap-anim';
+            el.innerText = "+1";
+            el.style.left = `${x - 20}px`;
+            el.style.top = `${y - 20}px`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 700);
+        }
+
+        // Energy Regen
+        setInterval(() => {
+            if (state.energy < 1000) {
+                state.energy += 1;
+                updateUI();
+            }
+        }, 2000);
+
+        updateUI();
+    </script>
+</body>
+</html>
