@@ -3,87 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRULEGEND: Elite</title>
+    <title>TRULEGEND: Airdrop Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.1); }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Layout */
-        .screen { display: none; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 120px; }
-        .active-screen { display: flex; flex-direction: column; }
-        .card { background: var(--glass); padding: 15px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
-        
-        /* Stats */
-        .balance { font-size: 3.2rem; font-weight: 900; text-align: center; margin: 5px 0; color: #fff; text-shadow: 0 0 20px rgba(0, 136, 204, 0.6); }
-        .sync-status { font-size: 0.6rem; opacity: 0.5; display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; }
-        .dot { width: 6px; height: 6px; background: #4CAF50; border-radius: 50%; display: inline-block; }
-        .blink { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
+        :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.12); --success: #4CAF50; --warning: #ff9800; }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
-        /* Tapper */
-        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 5.5rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); transition: transform 0.1s; cursor: pointer; border: 6px solid rgba(255,255,255,0.1); user-select: none; -webkit-tap-highlight-color: transparent; }
-        .circle-btn:active { transform: scale(0.95); }
-        .tap-anim { position: absolute; color: white; font-weight: 900; font-size: 1.5rem; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 1000; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        /* HEADER UI */
+        .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
+        #sync-pill { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; border: 1px solid var(--border); }
+        .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+        .withdraw-btn { background: #ff9800; color: black; font-size: 0.7rem; font-weight: 800; padding: 7px 15px; border-radius: 10px; border: none; cursor: pointer; }
 
-        /* Navigation */
-        .dock { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,11,0.95); display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
-        .dock-item { opacity: 0.4; font-size: 0.65rem; text-align: center; color: white; flex: 1; cursor: pointer; }
-        .dock-item.active { opacity: 1; color: var(--accent); }
-        
-        .btn-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: bold; width: 100%; cursor: pointer; }
-        .multiplier-badge { background: #ff9800; color: black; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
+        /* SCREENS */
+        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; }
+        .active-screen { display: block; }
+        .card { background: var(--glass); padding: 18px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
+
+        /* MINE */
+        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 20px; text-shadow: 0 0 25px var(--accent); }
+        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); border: 8px solid var(--border); cursor: pointer; user-select: none; transition: transform 0.05s; }
+        .circle-btn:active { transform: scale(0.92); }
+
+        /* LISTS */
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .task-done { opacity: 0.5; filter: grayscale(1); }
+
+        /* NAV */
+        .dock { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 1000; }
+        .dock-item { opacity: 0.4; font-size: 0.6rem; text-align: center; color: white; flex: 1; cursor: pointer; }
+        .dock-item.active { opacity: 1; color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div class="header-ui">
+        <div id="sync-pill"><div class="dot" id="sync-dot"></div><span id="sync-text">SYNCED ✓</span></div>
+        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawals open Q3 2026 after Listing.')">WITHDRAW</button>
+    </div>
+
     <div id="tab-mine" class="screen active-screen">
-        <center>
-            <span id="lvl-name" style="color:var(--accent); font-weight:bold; font-size:0.8rem;">LOADING...</span>
-            <span class="multiplier-badge" id="multi-ui">1x</span>
-            <div class="sync-status"><span id="sync-dot" class="dot"></span> <span id="sync-text">SYNCED</span></div>
-        </center>
         <div class="balance" id="balance">0</div>
-        <div style="text-align: center; margin-bottom: 10px;">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
+        <div style="text-align: center; opacity: 0.7; margin-bottom: 10px;">⚡ <span id="energy">1000</span> / 1000</div>
         <div class="circle-btn" id="tap-btn">💎</div>
-        <center style="opacity:0.5; font-size:0.8rem;">Tap Power: +<span id="tap-power-ui">1</span></center>
     </div>
 
-    <div id="tab-rewards" class="screen">
-        <h3>Friends</h3>
-        <div class="card">
-            <p>Invite friends for 20,000 TRU bonus!</p>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-main" onclick="inviteFriend()">INVITE</button>
-                <button class="btn-main" style="background:#222; width:80px;" onclick="copyLink()">COPY</button>
-            </div>
-        </div>
-        <div class="card">
-            <div style="display:flex; justify-content:space-between;"><span>Total Referrals:</span> <b id="ref-count">0</b></div>
-        </div>
+    <div id="tab-tasks" class="screen">
+        <h3>Quests</h3>
+        <div id="task-list"></div>
     </div>
 
-    <div id="tab-lead" class="screen">
-        <h3>Leaderboard</h3>
-        <div class="card" id="lead-list">Loading...</div>
+    <div id="tab-skins" class="screen">
+        <h3>Skins Shop</h3>
+        <div id="skin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+    </div>
+
+    <div id="tab-drop" class="screen">
+        <h3>Tokenomics & Drop</h3>
+        <div class="card" style="text-align:center; border-color:var(--warning)">
+            <small style="color:var(--warning)">LISTING IN</small>
+            <div id="timer" style="font-size:1.6rem; font-weight:bold; margin:10px 0; font-family:monospace;">00:00:00:00</div>
+        </div>
+        <div class="card">
+            <b>Project Details</b>
+            <div class="stat-row"><span>Token Name</span><span>TruLegend</span></div>
+            <div class="stat-row"><span>Symbol</span><span style="color:var(--accent)">$TRU</span></div>
+            <div class="stat-row"><span>Total Supply</span><span>1,000,000,000</span></div>
+            <div class="stat-row"><span>Network</span><span>TON Blockchain</span></div>
+        </div>
+        <div class="card">
+            <b>Distribution</b>
+            <div class="stat-row"><span>Airdrop Rewards</span><span style="color:var(--success)">75%</span></div>
+            <div class="stat-row"><span>Liquidity</span><span>15%</span></div>
+            <div class="stat-row"><span>Team Locked</span><span>10%</span></div>
+        </div>
+        <button style="background:var(--accent); color:white; border:none; width:100%; padding:15px; border-radius:15px; font-weight:bold;" onclick="tg.showAlert('TON Connect opens Q2 2026')">CONNECT TON WALLET</button>
     </div>
 
     <div class="dock">
         <div class="dock-item active" onclick="switchTab('mine', this)">⛏️<br>MINE</div>
-        <div class="dock-item" onclick="switchTab('rewards', this)">🎁<br>FRIENDS</div>
-        <div class="dock-item" onclick="switchTab('lead', this)">🏆<br>LEADS</div>
+        <div class="dock-item" onclick="switchTab('tasks', this)">📋<br>TASKS</div>
+        <div class="dock-item" onclick="switchTab('skins', this)">🎨<br>SKINS</div>
+        <div class="dock-item" onclick="switchTab('drop', this)">💰<br>DROP</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
-
-        const BOT_USERNAME = "trulegendbot"; 
 
         const config = {
             apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
@@ -99,109 +108,114 @@
 
         let state = {
             id: tg.initDataUnsafe?.user?.id || "dev_user",
-            name: tg.initDataUnsafe?.user?.first_name || "Legend",
-            balance: 0,
-            energy: 1000,
-            maxEnergy: 1000,
-            referrals: 0,
-            lvl: "BRONZE STARTER"
+            balance: 0, energy: 1000, equippedSkin: '💎', ownedSkins: ['💎'], tasks: {}
         };
 
-        let localBalance = 0;
-        let currentTapPower = 1;
+        const skins = [
+            { icon: '💎', name: 'Original', price: 0 },
+            { icon: '📀', name: 'Silver', price: 10000 },
+            { icon: '🟡', name: 'Gold', price: 50000 },
+            { icon: '🔥', name: 'Inferno', price: 250000 }
+        ];
+
+        const availableTasks = [
+            { id: 'tg_join', title: 'Join TruLegend Channel', reward: 50000, url: 'https://t.me/yourlink' },
+            { id: 'x_follow', title: 'Follow on X', reward: 20000, url: 'https://x.com/yourlink' }
+        ];
 
         function init() {
             db.ref('users/' + state.id).once('value', (s) => {
-                if(s.exists()) {
-                    state = {...state, ...s.val()};
-                    localBalance = state.balance;
-                    checkBackup(); 
-                } else {
-                    handleReferral();
-                    save();
-                }
-                calculateMultiplier();
+                if(s.exists()) state = {...state, ...s.val()};
+                if(!state.tasks) state.tasks = {};
                 updateUI();
+                renderSkins();
+                renderTasks();
+                startCountdown();
             });
-            loadLead();
         }
 
-        function calculateMultiplier() {
-            if (localBalance >= 250000) { currentTapPower = 10; state.lvl = "ELITE WHALE"; }
-            else if (localBalance >= 50000) { currentTapPower = 5; state.lvl = "GOLD MINER"; }
-            else if (localBalance >= 5000) { currentTapPower = 2; state.lvl = "SILVER TAPPER"; }
-            else { currentTapPower = 1; state.lvl = "BRONZE STARTER"; }
+        function save() {
+            const status = document.getElementById('sync-text');
+            const dot = document.getElementById('sync-dot');
+            status.innerText = "SAVING...";
+            dot.style.background = "var(--warning)";
+            db.ref('users/' + state.id).update(state).then(() => {
+                setTimeout(() => {
+                    status.innerText = "SYNCED ✓";
+                    dot.style.background = "var(--success)";
+                }, 800);
+            });
         }
 
-        function handleReferral() {
-            const refId = tg.initDataUnsafe?.start_param;
-            if (refId && refId !== state.id.toString()) {
-                db.ref('users/' + refId).child('referrals').transaction(c => (c || 0) + 1);
-                db.ref('users/' + refId).child('balance').transaction(b => (b || 0) + 20000);
-                state.balance = 5000; localBalance = 5000;
-            }
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            availableTasks.forEach(t => {
+                const done = state.tasks[t.id];
+                list.innerHTML += `
+                    <div class="card ${done ? 'task-done' : ''}" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div><b>${t.title}</b><br><small style="color:var(--success)">+${t.reward/1000}k $TRU</small></div>
+                        <button class="withdraw-btn" style="background:${done ? '#444' : 'var(--accent)'}" 
+                        onclick="doTask('${t.id}', '${t.url}', ${t.reward})">${done ? 'CLAIMED' : 'GO'}</button>
+                    </div>`;
+            });
         }
 
-        document.getElementById('tap-btn').addEventListener('pointerdown', (e) => {
-            if(state.energy >= currentTapPower) {
-                localBalance += currentTapPower;
-                state.balance = localBalance;
-                state.energy -= currentTapPower;
-                calculateMultiplier();
-                createTapAnim(e.clientX, e.clientY);
+        function doTask(id, url, reward) {
+            if(state.tasks[id]) return;
+            tg.openLink(url);
+            state.balance += reward;
+            state.tasks[id] = true;
+            save(); updateUI(); renderTasks();
+        }
+
+        function renderSkins() {
+            const grid = document.getElementById('skin-grid');
+            grid.innerHTML = '';
+            skins.forEach(s => {
+                const owned = (state.ownedSkins || ['💎']).includes(s.icon);
+                const active = state.equippedSkin === s.icon;
+                grid.innerHTML += `
+                    <div class="card" style="text-align:center; padding:10px; ${active ? 'border-color:var(--accent)' : ''}">
+                        <div style="font-size:2.5rem">${s.icon}</div>
+                        <button class="withdraw-btn" style="width:100%; margin-top:10px; background:${active ? 'var(--success)' : (owned ? '#555' : 'var(--accent)')}" 
+                        onclick="${owned ? `setSkin('${s.icon}')` : `buySkin('${s.icon}', ${s.price})`}">
+                        ${active ? 'ACTIVE' : (owned ? 'USE' : s.price/1000+'k')}</button>
+                    </div>`;
+            });
+        }
+
+        function setSkin(icon) { state.equippedSkin = icon; save(); renderSkins(); updateUI(); }
+        function buySkin(icon, price) {
+            if(state.balance >= price) { state.balance -= price; state.ownedSkins.push(icon); save(); renderSkins(); updateUI(); }
+        }
+
+        document.getElementById('tap-btn').addEventListener('pointerdown', () => {
+            if(state.energy >= 1) {
+                state.balance += 1;
+                state.energy -= 1;
                 updateUI();
                 if(navigator.vibrate) navigator.vibrate(10);
-                
-                // Visual sync feedback
-                document.getElementById('sync-text').innerText = "UNSAVED TAPS...";
-                document.getElementById('sync-dot').style.background = "#ff9800";
             }
         });
 
-        function createTapAnim(x, y) {
-            const el = document.createElement('div');
-            el.className = 'tap-anim'; el.innerText = `+${currentTapPower}`;
-            el.style.left = x + 'px'; el.style.top = (y - 50) + 'px';
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 800);
-        }
-
         function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(localBalance).toLocaleString();
+            document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
-            document.getElementById('max-energy').innerText = state.maxEnergy;
-            document.getElementById('multi-ui').innerText = currentTapPower + "x";
-            document.getElementById('tap-power-ui').innerText = currentTapPower;
-            document.getElementById('lvl-name').innerText = state.lvl;
-            document.getElementById('ref-count').innerText = state.referrals || 0;
+            document.getElementById('tap-btn').innerText = state.equippedSkin;
         }
 
-        function inviteFriend() {
-            const link = `https://t.me/${BOT_USERNAME}?startapp=${state.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me on TRULEGEND!`);
-        }
-
-        function copyLink() {
-            const link = `https://t.me/${BOT_USERNAME}?startapp=${state.id}`;
-            const el = document.createElement('textarea');
-            el.value = link; document.body.appendChild(el);
-            el.select(); document.execCommand('copy');
-            document.body.removeChild(el);
-            tg.showAlert("Link copied! ✅");
-        }
-
-        function loadLead() {
-            db.ref('users').orderByChild('balance').limitToLast(10).on('value', (snap) => {
-                const list = document.getElementById('lead-list'); list.innerHTML = "";
-                let players = []; snap.forEach(c => { players.push({...c.val(), id: c.key}); });
-                players.reverse().forEach((p, i) => {
-                    const highlight = p.id == state.id ? "background:rgba(0,136,204,0.1); border:1px solid var(--accent);" : "";
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-radius:10px; margin-bottom:5px; ${highlight}">
-                        <span>#${i+1} ${p.name}</span>
-                        <b>${Math.floor(p.balance).toLocaleString()}</b>
-                    </div>`;
-                });
-            });
+        function startCountdown() {
+            const target = new Date("2026-07-01T00:00:00").getTime();
+            setInterval(() => {
+                const now = new Date().getTime();
+                const d = target - now;
+                const days = Math.floor(d / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((d % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((d % (1000 * 60)) / 1000);
+                document.getElementById('timer').innerText = `${days}d ${hours}h ${mins}m ${secs}s`;
+            }, 1000);
         }
 
         function switchTab(t, el) {
@@ -211,57 +225,7 @@
             el.classList.add('active');
         }
 
-        // --- 🛡️ THE SAFETY SYSTEM ---
-        function save() {
-            document.getElementById('sync-dot').classList.add('blink');
-            db.ref('users/' + state.id).transaction((current) => {
-                if (current) {
-                    current.balance = Math.max(current.balance, state.balance);
-                    current.energy = state.energy;
-                    current.lvl = state.lvl;
-                    current.referrals = state.referrals || 0;
-                    return current;
-                }
-                return state;
-            }, (err, commit) => {
-                document.getElementById('sync-dot').classList.remove('blink');
-                if(commit) {
-                    document.getElementById('sync-text').innerText = "SYNCED";
-                    document.getElementById('sync-dot').style.background = "#4CAF50";
-                }
-            });
-            localStorage.setItem('tru_backup_' + state.id, JSON.stringify({
-                balance: localBalance,
-                energy: state.energy,
-                lvl: state.lvl
-            }));
-        }
-
-        function checkBackup() {
-            const backup = localStorage.getItem('tru_backup_' + state.id);
-            if (backup) {
-                const data = JSON.parse(backup);
-                if (data.balance > localBalance) {
-                    localBalance = data.balance;
-                    state.balance = data.balance;
-                    state.energy = data.energy;
-                    state.lvl = data.lvl;
-                }
-            }
-        }
-
-        window.addEventListener('pause', save);
-        window.addEventListener('blur', save);
-        window.addEventListener('beforeunload', save);
-
-        setInterval(() => {
-            if(state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.energy + 2, state.maxEnergy);
-                updateUI();
-            }
-            save();
-        }, 3000);
-
+        setInterval(() => { if(state.energy < 1000) state.energy += 5; save(); updateUI(); }, 5000);
         init();
     </script>
 </body>
