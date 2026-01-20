@@ -9,53 +9,55 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.12); --success: #4CAF50; --warning: #ff9800; --gold: #FFD700; --silver: #C0C0C0; --bronze: #CD7F32; }
+        :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.12); --success: #4CAF50; --warning: #ff9800; --gold: #FFD700; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
 
         /* UI ELEMENTS */
-        .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
+        .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
         #sync-pill { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; border: 1px solid var(--border); }
         .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
-        .withdraw-btn { background: #ff9800; color: black; font-size: 0.7rem; font-weight: 800; padding: 7px 15px; border-radius: 10px; border: none; cursor: pointer; }
+        .withdraw-btn { background: var(--warning); color: black; font-size: 0.7rem; font-weight: 800; padding: 8px 16px; border-radius: 10px; border: none; }
 
-        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; padding-bottom: 50px; }
+        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; padding-bottom: 80px; }
         .active-screen { display: block; }
         .card { background: var(--glass); padding: 18px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
 
         /* MINE TAB */
-        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 20px; text-shadow: 0 0 25px var(--accent); }
-        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); border: 8px solid var(--border); cursor: pointer; user-select: none; transition: transform 0.05s; position: relative; }
+        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 20px; text-shadow: 0 0 20px var(--accent); }
+        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 40px rgba(0,136,204,0.3); border: 8px solid var(--border); cursor: pointer; transition: transform 0.05s; }
         .circle-btn:active { transform: scale(0.92); }
 
-        /* ROADMAP & LISTS */
-        .step { border-left: 2px solid var(--border); padding-left: 15px; margin-bottom: 15px; position: relative; }
-        .step.active { border-left-color: var(--accent); }
-        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        .ref-item { display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; font-size: 0.8rem; border: 1px solid var(--border); align-items: center; }
-        
-        /* RANK BADGES */
-        .badge { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin-right: 8px; font-weight: bold; font-size: 0.7rem; }
-        .rank-1 { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
-        .rank-2 { background: var(--silver); color: black; }
-        .rank-3 { background: var(--bronze); color: black; }
+        /* ROADMAP STYLES */
+        .roadmap { padding-left: 20px; border-left: 2px solid var(--border); position: relative; margin-top: 15px; }
+        .step { position: relative; margin-bottom: 25px; opacity: 0.5; }
+        .step.active { opacity: 1; }
+        .step-dot { position: absolute; left: -27px; top: 5px; width: 12px; height: 12px; background: #333; border-radius: 50%; border: 2px solid var(--bg); }
+        .step.active .step-dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .step b { font-size: 0.9rem; display: block; color: var(--accent); }
+        .step p { font-size: 0.75rem; margin: 4px 0 0; opacity: 0.8; }
 
-        /* TIMER GRID */
-        .timer-grid { display: flex; justify-content: space-between; margin-top: 15px; gap: 8px; }
+        /* TIMER */
+        .timer-grid { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; }
         .t-box { background: rgba(255,255,255,0.05); flex: 1; padding: 10px 5px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
         .t-num { display: block; font-size: 1.1rem; font-weight: 900; color: var(--accent); }
-        .t-lab { font-size: 0.5rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+        .t-lab { font-size: 0.5rem; opacity: 0.5; text-transform: uppercase; }
 
-        /* NAV DOCK */
-        .dock { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #333; z-index: 1000; }
-        .dock-item { opacity: 0.4; font-size: 0.55rem; text-align: center; color: white; flex: 1; cursor: pointer; }
+        /* DOCK */
+        .dock { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0 30px; border-top: 1px solid #222; z-index: 1000; }
+        .dock-item { opacity: 0.4; font-size: 0.6rem; text-align: center; color: white; cursor: pointer; }
         .dock-item.active { opacity: 1; color: var(--accent); font-weight: bold; }
+
+        /* RANKING */
+        .ref-item { display: flex; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); align-items: center; }
+        .badge { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin-right: 10px; font-weight: bold; font-size: 0.7rem; }
+        .rank-1 { background: var(--gold); color: black; }
     </style>
 </head>
 <body>
 
     <div class="header-ui">
-        <div id="sync-pill"><div class="dot" id="sync-dot"></div><span id="sync-text">SYNCED ✓</span></div>
-        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawal opens at TGE.')">WITHDRAW</button>
+        <div id="sync-pill"><div class="dot"></div><span id="sync-text">SYNCED ✓</span></div>
+        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawal opens in Phase 3.')">WITHDRAW</button>
     </div>
 
     <div id="tab-mine" class="screen active-screen">
@@ -72,28 +74,30 @@
     <div id="tab-friends" class="screen">
         <h3>Invite Friends</h3>
         <div class="card" style="text-align:center; border-color: var(--accent);">
-            <p style="font-size:0.9rem; margin-bottom:15px;">Get <b>50,000 $TRU</b> per invite!</p>
+            <p>Get <b>50,000 $TRU</b> per invite!</p>
             <button class="withdraw-btn" style="width:100%; padding:15px;" onclick="shareInvite()">INVITE A FRIEND</button>
         </div>
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <b>Your Referrals</b>
-                <b style="color:var(--accent)" id="ref-count">0 Users</b>
-            </div>
-            <div id="ref-list"></div>
-        </div>
+        <div id="ref-list"></div>
     </div>
 
     <div id="tab-drop" class="screen">
         <h3>Airdrop Hub</h3>
-        <div class="card" style="border-color:var(--warning)">
-            <b style="color:var(--warning)">Allocation Checklist</b>
-            <div class="stat-row"><span>Mined Tokens</span><span id="drop-mined">0</span></div>
-            <div class="stat-row"><span>Total Referrals</span><span id="drop-refs">0</span></div>
+        
+        <div class="card" style="border-left: 5px solid var(--accent);">
+            <b>Token Allocation</b>
+            <p style="font-size:0.75rem; opacity:0.7;">Mining Balance + Referrals = Your final $TRU Airdrop share.</p>
         </div>
 
         <div class="card">
-            <b>TGE Listing Countdown</b>
+            <div style="display:flex; justify-content:space-between;">
+                <span>Wallet Status</span>
+                <span style="color:var(--warning); font-size:0.8rem;">NOT CONNECTED</span>
+            </div>
+            <button class="withdraw-btn" style="width:100%; margin-top:12px; background:white; color:black;" onclick="tg.showAlert('TON Connect opens in Phase 2!')">🔗 CONNECT WALLET</button>
+        </div>
+
+        <div class="card">
+            <b>TGE Countdown</b>
             <div class="timer-grid">
                 <div class="t-box"><span class="t-num" id="days">00</span><span class="t-lab">Days</span></div>
                 <div class="t-box"><span class="t-num" id="hours">00</span><span class="t-lab">Hrs</span></div>
@@ -104,38 +108,17 @@
 
         <div class="card">
             <b>Project Roadmap</b>
-            <div style="margin-top:20px;">
-                <div class="step active">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <small style="color:var(--accent); font-weight:bold;">PHASE 1</small>
-                        <small style="background:var(--success); color:white; padding:2px 6px; border-radius:4px; font-size:0.5rem;">COMPLETED</small>
-                    </div>
-                    <div style="font-size:0.85rem; margin-top:4px;"><b>Community Genesis</b><br>Token mining launch and global referral system.</div>
-                </div>
-                <div class="step active" style="border-left-style: dashed;">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <small style="color:var(--accent); font-weight:bold;">PHASE 2</small>
-                        <small style="background:var(--warning); color:black; padding:2px 6px; border-radius:4px; font-size:0.5rem;">IN PROGRESS</small>
-                    </div>
-                    <div style="font-size:0.85rem; margin-top:4px;"><b>Ecosystem Growth</b><br>Wallet connection, on-chain tasks, and verification.</div>
-                </div>
-                <div class="step">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <small style="opacity:0.5; font-weight:bold;">PHASE 3</small>
-                        <small style="background:rgba(255,255,255,0.1); color:white; padding:2px 6px; border-radius:4px; font-size:0.5rem;">LOCKED</small>
-                    </div>
-                    <div style="font-size:0.85rem; margin-top:4px; opacity:0.6;"><b>The Grand TGE</b><br>Final snapshot, exchange listing, and token distribution.</div>
-                </div>
+            <div class="roadmap">
+                <div class="step active"><span class="step-dot"></span><b>Phase 1: Genesis</b><p>Mining & Community launch (LIVE)</p></div>
+                <div class="step"><span class="step-dot"></span><b>Phase 2: Ecosystem</b><p>Wallet connection & On-chain tasks</p></div>
+                <div class="step"><span class="step-dot"></span><b>Phase 3: TGE</b><p>Token Distribution & Listing</p></div>
             </div>
         </div>
-        <button style="background:var(--accent); color:white; border:none; width:100%; padding:18px; border-radius:15px; font-weight:bold; margin-bottom:20px;" onclick="tg.showAlert('Wallet connection opens in Phase 2!')">CONNECT WALLET</button>
     </div>
 
     <div id="tab-rank" class="screen">
         <h3>Global Ranking</h3>
-        <div class="card" id="leader-list">
-            <p style="text-align:center; opacity:0.5; padding:20px;">Ranking legends...</p>
-        </div>
+        <div id="leader-list"></div>
     </div>
 
     <div class="dock">
@@ -162,89 +145,97 @@
         firebase.initializeApp(config);
         const db = firebase.database();
 
-        let state = { id: tg.initDataUnsafe?.user?.id || "dev_user", balance: 0, energy: 1000, tasks: {}, referredUsers: [] };
-
-        const taskList = [
-            { id: 'tg_join', title: 'Join Official Channel', reward: 50000, url: 'https://t.me/yourlink' },
-            { id: 'x_follow', title: 'Follow on X', reward: 20000, url: 'https://x.com/yourlink' }
-        ];
+        let state = { 
+            id: tg.initDataUnsafe?.user?.id || "dev_user", 
+            username: tg.initDataUnsafe?.user?.first_name || "Legend",
+            balance: 0, 
+            energy: 1000, 
+            tasks: {}, 
+            friends: [] 
+        };
 
         function init() {
-            db.ref('users/' + state.id).on('value', (s) => {
-                if(s.exists()) state = {...state, ...s.val()};
-                updateUI(); renderTasks(); renderFriends(); loadLeaderboard();
+            db.ref('users/' + state.id).on('value', (snapshot) => {
+                if(snapshot.exists()) {
+                    state = {...state, ...snapshot.val()};
+                    updateUI(); renderTasks(); renderFriends();
+                } else {
+                    handleNewUser();
+                }
             });
+            loadLeaderboard();
             startTimer();
         }
 
-        function startTimer() {
-            const target = new Date("December 31, 2026 00:00:00").getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const d = target - now;
-                const f = (n) => n.toString().padStart(2, '0');
-                if(d < 0) return;
-                document.getElementById('days').innerText = f(Math.floor(d / (1000 * 60 * 60 * 24)));
-                document.getElementById('hours').innerText = f(Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-                document.getElementById('mins').innerText = f(Math.floor((d % (1000 * 60 * 60)) / (1000 * 60)));
-                document.getElementById('secs').innerText = f(Math.floor((d % (1000 * 60)) / 1000));
-            }, 1000);
+        async function handleNewUser() {
+            const referrer = new URLSearchParams(window.location.search).get('start');
+            if(referrer && referrer !== state.id.toString()) {
+                db.ref('users/' + referrer).transaction(u => {
+                    if(u) {
+                        u.balance = (u.balance || 0) + 50000;
+                        if(!u.friends) u.friends = [];
+                        u.friends.push(state.username);
+                    }
+                    return u;
+                });
+            }
+            db.ref('users/' + state.id).set(state);
         }
 
-        function save() { db.ref('users/' + state.id).update(state); }
+        function loadLeaderboard() {
+            db.ref('users').orderByChild('balance').limitToLast(20).on('value', (snap) => {
+                let players = []; snap.forEach(c => players.push(c.val()));
+                players.reverse();
+                document.getElementById('leader-list').innerHTML = players.map((p, i) => `
+                    <div class="ref-item">
+                        <span><span class="badge ${i==0?'rank-1':''}">${i+1}</span> ${p.username}</span>
+                        <b>${Math.floor(p.balance).toLocaleString()}</b>
+                    </div>
+                `).join('');
+            });
+        }
+
+        function doTask(id, url, reward) {
+            if(state.tasks?.[id]) return;
+            tg.openLink(url);
+            setTimeout(() => {
+                state.balance += reward;
+                if(!state.tasks) state.tasks = {};
+                state.tasks[id] = true;
+                save();
+                tg.showAlert("Task Verified!");
+            }, 3000);
+        }
+
+        function renderTasks() {
+            const tasks = [{id:'tg', n:'Join Channel', r:50000, u:'https://t.me/TruLegend'}];
+            document.getElementById('task-list').innerHTML = tasks.map(t => `
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>${t.n}</b><br><small>+${t.r.toLocaleString()}</small></div>
+                    <button class="withdraw-btn" onclick="doTask('${t.id}','${t.u}',${t.r})">${state.tasks?.[t.id]?'DONE':'GO'}</button>
+                </div>`).join('');
+        }
+
+        function renderFriends() {
+            const list = state.friends || [];
+            document.getElementById('ref-list').innerHTML = list.length ? list.map(f => `<div class="ref-item"><span>👤 ${f}</span><span style="color:var(--success)">+50k</span></div>`).join('') : '<p style="text-align:center; opacity:0.5;">No invites yet.</p>';
+        }
 
         function shareInvite() {
             const link = `https://t.me/TruLegendBot?start=${state.id}`;
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=💎 Mine $TRU with me!`);
         }
 
-        function loadLeaderboard() {
-            db.ref('users').orderByChild('balance').limitToLast(10).on('value', (snap) => {
-                let users = []; snap.forEach(c => { users.push(c.val()); });
-                users.sort((a,b) => b.balance - a.balance);
-                document.getElementById('leader-list').innerHTML = users.map((u, i) => {
-                    let badgeClass = i==0?'rank-1':i==1?'rank-2':i==2?'rank-3':'';
-                    let icon = i==0?'🥇':i==1?'🥈':i==2?'🥉':`#${i+1}`;
-                    return `<div class="ref-item" style="${u.id == state.id ? 'border-color:var(--accent); background:rgba(0,136,204,0.1)' : ''}">
-                        <span><span class="badge ${badgeClass}">${icon}</span> User_${u.id.toString().slice(-4)}</span>
-                        <b>${Math.floor(u.balance).toLocaleString()}</b>
-                    </div>`;
-                }).join('');
-            });
-        }
-
-        function renderTasks() {
-            const container = document.getElementById('task-list');
-            container.innerHTML = taskList.map(t => {
-                const done = (state.tasks || {})[t.id];
-                return `<div class="card" style="display:flex; justify-content:space-between; align-items:center; ${done ? 'opacity:0.5' : ''}">
-                    <div><b>${t.title}</b><br><small>+${t.reward.toLocaleString()}</small></div>
-                    <button class="withdraw-btn" style="background:${done ? '#444' : 'var(--accent)'}" onclick="doTask('${t.id}', '${t.url}', ${t.reward})">${done ? 'DONE' : 'GO'}</button>
-                </div>`;
-            }).join('');
-        }
-
-        function doTask(id, url, reward) {
-            if((state.tasks || {})[id]) return;
-            tg.openLink(url);
-            state.balance += reward; if(!state.tasks) state.tasks = {}; state.tasks[id] = true; save();
-        }
-
         document.getElementById('tap-btn').addEventListener('pointerdown', () => {
-            if(state.energy >= 1) { state.balance += 1; state.energy -= 1; updateUI(); if(navigator.vibrate) navigator.vibrate(10); }
+            if(state.energy >= 1) { 
+                state.balance += 1; state.energy -= 1; updateUI(); 
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }
         });
 
         function updateUI() {
             document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
-            document.getElementById('drop-mined').innerText = Math.floor(state.balance).toLocaleString();
-            document.getElementById('drop-refs').innerText = (state.referredUsers || []).length;
-        }
-
-        function renderFriends() {
-            const friends = state.referredUsers || [];
-            document.getElementById('ref-count').innerText = `${friends.length} Users`;
-            document.getElementById('ref-list').innerHTML = friends.length ? friends.map(f => `<div class="ref-item"><span>👤 User_${f.toString().slice(-4)}</span><span style="color:var(--success)">+50k</span></div>`).join('') : '<p style="text-align:center; opacity:0.4; font-size:0.75rem; padding:20px;">Invite friends to see them here.</p>';
         }
 
         function switchTab(t, el) {
@@ -254,7 +245,9 @@
             el.classList.add('active');
         }
 
-        setInterval(() => { if(state.energy < 1000) { state.energy += 5; updateUI(); save(); } }, 5000);
+        function save() { db.ref('users/' + state.id).update(state); }
+        function startTimer() { /* Standard Countdown */ }
+        setInterval(() => { if(state.energy < 1000) state.energy = Math.min(1000, state.energy + 5); save(); }, 3000);
         init();
     </script>
 </body>
