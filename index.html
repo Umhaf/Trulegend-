@@ -52,6 +52,8 @@
         .ref-item { display: flex; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); align-items: center; }
         .badge { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin-right: 12px; font-weight: bold; font-size: 0.7rem; }
         .rank-1 { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
+        .rank-2 { background: var(--silver); color: black; }
+        .rank-3 { background: var(--bronze); color: black; }
     </style>
 </head>
 <body>
@@ -209,14 +211,21 @@
         }
 
         function loadRankings() {
-            db.ref('users').orderByChild('balance').limitToLast(15).on('value', (snap) => {
+            db.ref('users').orderByChild('balance').limitToLast(25).on('value', (snap) => {
                 let players = []; snap.forEach(c => players.push(c.val()));
                 players.sort((a,b) => b.balance - a.balance);
-                document.getElementById('leader-list').innerHTML = players.map((p, i) => `
+                
+                document.getElementById('leader-list').innerHTML = players.map((p, i) => {
+                    const rank = i + 1;
+                    let badgeClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+                    let medal = rank <= 3 ? ['🥇','🥈','🥉'][i] : `#${rank}`;
+                    
+                    return `
                     <div class="ref-item" style="${p.id == user.id ? 'border-color:var(--accent); background:rgba(0,136,204,0.1)' : ''}">
-                        <span><span class="badge ${i==0?'rank-1':''}">${i+1}</span> ${p.username || 'User'}</span>
+                        <span><span class="badge ${badgeClass}">${medal}</span> ${p.username || 'User'}</span>
                         <b>${Math.floor(p.balance || 0).toLocaleString()}</b>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
             });
         }
 
@@ -267,6 +276,46 @@
 
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 3); document.getElementById('energy').innerText = state.energy; } }, 4000);
         init();
+        function loadRankings() {
+    // 1. Listen for top 20 players
+    db.ref('users').orderByChild('balance').limitToLast(20).on('value', (snap) => {
+        let players = [];
+        let userInTop = false;
+
+        snap.forEach(c => {
+            let p = c.val();
+            players.push(p);
+            if(p.id == user.id) userInTop = true;
+        });
+
+        // 2. Add YOURSELF manually to the list if you aren't in the top yet 
+        // This fixes the "0" issue you saw in the screenshot
+        if(!userInTop) {
+            players.push({
+                id: user.id,
+                username: user.first_name,
+                balance: state.balance, // Uses your live balance
+                friends: state.friends || []
+            });
+        }
+
+        // 3. Sort correctly: Biggest balance at the top
+        players.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+
+        // 4. Update the screen
+        document.getElementById('leader-list').innerHTML = players.map((p, i) => {
+            const isMe = p.id == user.id;
+            return `
+            <div class="ref-item" style="${isMe ? 'border: 2px solid var(--accent); background: rgba(0,136,204,0.15);' : ''}">
+                <span><span class="badge ${i==0?'rank-1':''}">${i+1}</span> ${p.username || 'User'}</span>
+                <div style="text-align: right;">
+                    <b>${Math.floor(p.balance || 0).toLocaleString()}</b>
+                    <small style="display:block; opacity:0.5; font-size:0.6rem;">👥 ${(p.friends || []).length} refs</small>
+                </div>
+            </div>`;
+        }).join('');
+    });
+}
     </script>
 </body>
 </html>
