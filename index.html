@@ -248,7 +248,17 @@
 
         let saveTimeout;
         function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => save(), 1500); }
-        function save() { db.ref('users/' + user.id).update({ balance: state.balance, energy: state.energy, tasks: state.tasks || {}, lastClaim: state.lastClaim || 0 }); }
+        
+        // FIXED SAVE FUNCTION: Added state.friends to prevent referral count loss
+        function save() { 
+            db.ref('users/' + user.id).update({ 
+                balance: state.balance, 
+                energy: state.energy, 
+                tasks: state.tasks || {}, 
+                lastClaim: state.lastClaim || 0,
+                friends: state.friends || []
+            }); 
+        }
 
         function switchTab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
