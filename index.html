@@ -193,22 +193,42 @@
         }
 
         function renderTasks() {
-            const tasks = [{id:'tg', n:'Join Channel', r:50000, u:'https://t.me/trulegendchennels'}];
-            document.getElementById('task-list').innerHTML = tasks.map(t => `
-                <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><b>${t.n}</b><br><small>+${t.r.toLocaleString()}</small></div>
-                    <button class="withdraw-btn" onclick="doTask('${t.id}','${t.u}',${t.r})">${state.tasks?.[t.id]?'CLAIMED':'GO'}</button>
-                </div>`).join('');
-        }
+    const tasks = [
+        { id: 'tg', n: 'Join Telegram Channel', r: 5000, u: 'https://t.me/trulegendchennels' },
+        { id: 'x', n: 'Follow us on X (Twitter)', r: 3500, u: 'https://twitter.com/umarlegend11' },
+        { id: 'yt', n: 'Subscribe to YouTube', r: 10000, u: 'https://youtube.com/@YourChannel' }
+    ];
+
+    document.getElementById('task-list').innerHTML = tasks.map(t => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <b>${t.n}</b><br>
+                <small style="color:var(--gold);">+${t.r.toLocaleString()} $TRU</small>
+            </div>
+            <button class="withdraw-btn" 
+                style="${state.tasks?.[t.id] ? 'background:#333; color:white; opacity:0.5;' : ''}" 
+                onclick="doTask('${t.id}','${t.u}',${t.r})">
+                ${state.tasks?.[t.id] ? 'CLAIMED' : 'GO'}
+            </button>
+        </div>`).join('');
+}
 
         function doTask(id, url, reward) {
-            if(state.tasks?.[id]) return;
-            tg.openLink(url);
-            setTimeout(() => {
-                state.balance += reward; if(!state.tasks) state.tasks = {}; state.tasks[id] = true;
-                save(); tg.showAlert("Task Verified!");
-            }, 3000);
+    if(state.tasks?.[id]) return;
+    tg.openLink(url);
+    
+    // Show a "Verifying" alert
+    tg.showConfirm("Did you complete the task?", (confirmed) => {
+        if(confirmed) {
+            state.balance += reward; 
+            if(!state.tasks) state.tasks = {}; 
+            state.tasks[id] = true;
+            save(); 
+            renderUI(); // Refresh the list immediately
+            tg.showAlert("Success! Task Verified.");
         }
+    });
+}
 
         function loadRankings() {
             db.ref('users').orderByChild('balance').limitToLast(20).on('value', (snap) => {
