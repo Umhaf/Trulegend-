@@ -7,135 +7,80 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
     <style>
         :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255,255,255,0.12); --success: #4CAF50; --warning: #ff9800; --gold: #FFD700; --silver: #C0C0C0; --bronze: #CD7F32; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
-
-        /* UI ELEMENTS */
-        .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
-        #sync-pill { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; border: 1px solid var(--border); }
-        .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
-        .withdraw-btn { background: var(--warning); color: black; font-size: 0.7rem; font-weight: 800; padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer; }
-
-        /* SCREENS */
-        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; padding-bottom: 80px; }
+        .header-ui { position: fixed; top: 0; width: 100%; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); }
+        .screen { display: none; padding: 20px; height: calc(100vh - 110px); overflow-y: auto; margin-top: 60px; box-sizing: border-box; padding-bottom: 100px; }
         .active-screen { display: block; }
         .card { background: var(--glass); padding: 18px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 15px; }
-
-        /* ROADMAP STYLES */
-        .roadmap-container { margin-top: 10px; padding-left: 15px; border-left: 2px solid var(--border); }
-        .roadmap-step { position: relative; margin-bottom: 20px; padding-left: 15px; opacity: 0.6; }
-        .roadmap-step.active { opacity: 1; }
-        .roadmap-step::before { content: ''; position: absolute; left: -22px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #333; border: 2px solid var(--bg); }
-        .roadmap-step.active::before { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-        .roadmap-step b { color: var(--accent); font-size: 0.85rem; display: block; }
-        .roadmap-step p { font-size: 0.7rem; margin: 4px 0 0; }
-
-        /* MINE TAB */
-        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 20px; text-shadow: 0 0 25px var(--accent); }
-        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); border: 8px solid var(--border); cursor: pointer; user-select: none; transition: transform 0.05s; }
-        .circle-btn:active { transform: scale(0.92); }
-
-        /* DOCK */
+        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 20px; text-shadow: 0 0 25px var(--accent); letter-spacing: -2px; }
+        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.4); border: 8px solid var(--border); cursor: pointer; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
+        .circle-btn:active { transform: scale(0.95); }
+        .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(255,255,255,0.03); border-radius: 15px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .badge { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 900; font-size: 0.8rem; margin-right: 12px; }
+        .top1 { background: var(--gold); color: #000; }
+        .top2 { background: var(--silver); color: #000; }
+        .top3 { background: var(--bronze); color: #000; }
         .dock { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0 35px; border-top: 1px solid #222; z-index: 1000; }
-        .dock-item { opacity: 0.4; font-size: 0.6rem; text-align: center; color: white; flex: 1; cursor: pointer; }
-        .dock-item.active { opacity: 1; color: var(--accent); font-weight: bold; }
-
-        /* LISTS & MODALS */
-        .ref-item { display: flex; justify-content: space-between; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); align-items: center; }
-        .badge { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; margin-right: 12px; font-weight: bold; font-size: 0.7rem; }
-        .rank-1 { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
-        
-        #daily-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+        .dock-item { opacity: 0.4; font-size: 0.65rem; text-align: center; color: white; flex: 1; cursor: pointer; }
+        .dock-item.active { opacity: 1; color: var(--accent); }
+        .withdraw-btn { background: var(--warning); color: black; font-size: 0.7rem; font-weight: 800; padding: 10px 20px; border-radius: 12px; border: none; }
+        .roadmap-step { position: relative; padding-left: 20px; padding-bottom: 20px; border-left: 2px solid #222; }
+        .roadmap-step.done { border-left: 2px solid var(--accent); }
     </style>
 </head>
 <body>
 
-    <div id="daily-modal">
-        <div class="card" style="width:80%; text-align:center; padding:30px; border-color:var(--gold);">
-            <h2 style="color:var(--gold); margin-top:0;">🎁 Daily Gift</h2>
-            <p>Welcome back! Here is your mining bonus.</p>
-            <div style="font-size:2.5rem; margin:20px 0; font-weight:900;">100,000</div>
-            <button class="withdraw-btn" style="width:100%; padding:15px; background:var(--gold);" onclick="claimDaily()">CLAIM $TRU</button>
-        </div>
-    </div>
-
     <div class="header-ui">
-        <div id="sync-pill"><div class="dot"></div><span id="sync-text">SYNCED ✓</span></div>
-        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawal opens in Phase 3.')">WITHDRAW</button>
+        <div style="font-weight: 800;">TRULEGEND</div>
+        <button class="withdraw-btn" onclick="tg.showAlert('Withdrawal portal opens in Phase 3')">WITHDRAW</button>
     </div>
 
     <div id="tab-mine" class="screen active-screen">
-        <div class="balance" id="balance">0</div>
-        <div style="text-align: center; opacity: 0.7; margin-bottom: 10px;">⚡ <span id="energy">1000</span> / 1000</div>
+        <div class="balance" id="balance" onclick="adminCheck()">0</div>
+        <div style="text-align: center; margin-top: 20px;">
+            <span style="background:rgba(255,255,255,0.05); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--border);">
+                ⚡ <span id="energy">1000</span> / 1000
+            </span>
+        </div>
         <div class="circle-btn" id="tap-btn">💎</div>
     </div>
 
     <div id="tab-tasks" class="screen">
-        <h3>Quests</h3>
-        <div id="task-list"></div>
-    </div>
-
-    <div id="tab-friends" class="screen">
-        <h3>Invite Friends</h3>
-        <div class="card" style="display:flex; justify-content:space-between;">
-            <span>Total Referrals:</span>
-            <b id="ref-count" style="color:var(--accent);">0</b>
+        <h2>Quests</h2>
+        <div id="task-list">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>Join Telegram</b><br><small style="color:var(--accent);">+100,000 $TRU</small></div>
+                <button class="withdraw-btn" id="btn-task-tg" onclick="doTask('tg', 'https://t.me/YourChannel', 100000)">GO</button>
+            </div>
         </div>
-        <button class="withdraw-btn" style="width:100%; padding:15px; margin-bottom:15px;" onclick="shareInvite()">INVITE A FRIEND</button>
-        <div id="ref-list"></div>
     </div>
 
     <div id="tab-drop" class="screen">
-        <h3>Airdrop Hub</h3>
-        
+        <h2>Airdrop Hub</h2>
         <div class="card" style="border-left: 4px solid var(--accent);">
-            <b>Allocation Basis</b>
-            <p style="font-size: 0.7rem; opacity: 0.8; line-height: 1.4; margin-top: 8px;">
-                Your $TRU allocation is calculated based on: <br>
-                • Total Coins Mined <br>
-                • Number of Referrals <br>
-                • Completed Quests
-            </p>
+            <b>Wallet Connection</b>
+            <button class="withdraw-btn" style="width:100%; margin-top:10px; background:white; color:black;" onclick="tg.showAlert('Linking starts Phase 2')">CONNECT WALLET</button>
         </div>
-
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items: center;">
-                <span>Wallet Status</span>
-                <span style="color:var(--warning); font-size: 0.65rem; font-weight: bold;">DISCONNECTED</span>
-            </div>
-            <button class="withdraw-btn" style="width:100%; margin-top:12px; background:white; color:black;" onclick="tg.showAlert('Phase 2: Wallet Verification starts soon!')">🔗 CONNECT WALLET</button>
-        </div>
-
-        <div class="card">
-            <b>Project Roadmap</b>
-            <div class="roadmap-container">
-                <div class="roadmap-step active">
-                    <b>Phase 1: Genesis</b>
-                    <p>Community Building & Initial Mining (Active)</p>
-                </div>
-                <div class="roadmap-step">
-                    <b>Phase 2: Verification</b>
-                    <p>Wallet Connection & On-chain Verification</p>
-                </div>
-                <div class="roadmap-step">
-                    <b>Phase 3: TGE & Listing</b>
-                    <p>Token Generation Event & $TRU Exchange Listing</p>
-                </div>
-            </div>
-        </div>
+        <h3>Roadmap</h3>
+        <div class="roadmap-step done"><h4>Phase 1: Mining</h4><p>Community & $TRU Fair Launch</p></div>
+        <div class="roadmap-step"><h4>Phase 2: Snapshot</h4><p>Verification & Tasks</p></div>
+        <div class="roadmap-step"><h4>Phase 3: TGE</h4><p>Listing & Distribution</p></div>
     </div>
 
     <div id="tab-rank" class="screen">
-        <h3>Global Ranking</h3>
+        <h2>Leaderboard</h2>
+        <div class="card" style="text-align:center; background:linear-gradient(45deg, #001a33, #0088cc); border:none;">
+            <small>GLOBAL COMMUNITY TOTAL</small>
+            <div id="global-total" style="font-size:1.5rem; font-weight:900;">0</div>
+        </div>
         <div id="leader-list"></div>
     </div>
 
     <div class="dock">
         <div class="dock-item active" onclick="switchTab('mine', this)">⛏️<br>MINE</div>
         <div class="dock-item" onclick="switchTab('tasks', this)">📋<br>TASKS</div>
-        <div class="dock-item" onclick="switchTab('friends', this)">👥<br>FRIENDS</div>
         <div class="dock-item" onclick="switchTab('drop', this)">💰<br>DROP</div>
         <div class="dock-item" onclick="switchTab('rank', this)">🏆<br>RANK</div>
     </div>
@@ -144,7 +89,7 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
-        const config = {
+        const firebaseConfig = {
             apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
             authDomain: "trulegend-be32e.firebaseapp.com",
             databaseURL: "https://trulegend-be32e-default-rtdb.firebaseio.com",
@@ -153,114 +98,60 @@
             messagingSenderId: "462505787354",
             appId: "1:462505787354:web:60a34512cef1f26ef34ae3"
         };
-        firebase.initializeApp(config);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const user = tg.initDataUnsafe?.user || { id: "dev_user", first_name: "Legend" };
-        let state = { balance: 0, energy: 1000, tasks: {}, friends: [], lastClaim: 0 };
+        const user = tg.initDataUnsafe?.user || { id: "test_user", first_name: "Legend" };
+        let state = { balance: 0, energy: 1000, tasks: {}, friends: [], lastSync: Date.now() };
 
         function init() {
-            db.ref('users/' + user.id).on('value', (snap) => {
+            db.ref('users/' + user.id).once('value', (snap) => {
                 if(snap.exists()) {
                     state = { ...state, ...snap.val() };
+                    const elapsed = Math.floor((Date.now() - (state.lastSync || Date.now())) / 4000);
+                    state.energy = Math.min(1000, (state.energy || 0) + (elapsed * 4));
                     renderUI();
-                    checkDaily();
-                } else {
-                    handleNewUser();
-                }
+                } else { handleNewUser(); }
             });
-            loadRankings();
+            loadRankings(); 
         }
 
         async function handleNewUser() {
-            const referrer = new URLSearchParams(window.location.search).get('start');
-            if(referrer && referrer !== user.id.toString()) {
-                db.ref('users/' + referrer).transaction(u => {
-                    if(u) { u.balance = (u.balance || 0) + 50000; if(!u.friends) u.friends = []; u.friends.push(user.first_name); }
-                    return u;
-                });
-            }
-            db.ref('users/' + user.id).set({ id: user.id, username: user.first_name, balance: 0, energy: 1000, tasks: {}, friends: [] });
+            const newUser = { id: user.id, username: user.first_name, balance: 0, energy: 1000, tasks: {}, lastSync: Date.now() };
+            await db.ref('users/' + user.id).set(newUser);
+            renderUI();
         }
 
         function renderUI() {
             document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
             document.getElementById('energy').innerText = state.energy;
-            const fArray = state.friends || [];
-            document.getElementById('ref-count').innerText = fArray.length;
-            document.getElementById('ref-list').innerHTML = fArray.length ? fArray.map(f => `<div class="ref-item">👤 ${f} <span style="color:var(--success)">+50k</span></div>`).join('') : '<p style="text-align:center; opacity:0.5;">No friends invited yet.</p>';
-            renderTasks();
+            if(state.tasks?.tg) {
+                const btn = document.getElementById('btn-task-tg');
+                btn.innerText = "DONE";
+                btn.style.opacity = "0.5";
+                btn.disabled = true;
+            }
         }
-
-        function renderTasks() {
-    const tasks = [
-        { id: 'tg', n: 'Join Telegram Channel', r: 5000, u: 'https://t.me/trulegendchennels' },
-        { id: 'x', n: 'Follow us on X (Twitter)', r: 3500, u: 'https://twitter.com/@umarlegend11' },
-        { id: 'yt', n: 'Subscribe to YouTube', r: 10000, u: '@umar-legendchennel3207' }
-    ];
-
-    document.getElementById('task-list').innerHTML = tasks.map(t => `
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <b>${t.n}</b><br>
-                <small style="color:var(--gold);">+${t.r.toLocaleString()} $TRU</small>
-            </div>
-            <button class="withdraw-btn" 
-                style="${state.tasks?.[t.id] ? 'background:#333; color:white; opacity:0.5;' : ''}" 
-                onclick="doTask('${t.id}','${t.u}',${t.r})">
-                ${state.tasks?.[t.id] ? 'CLAIMED' : 'GO'}
-            </button>
-        </div>`).join('');
-}
 
         function doTask(id, url, reward) {
-    if(state.tasks?.[id]) return;
-    tg.openLink(url);
-    
-    // Show a "Verifying" alert
-    tg.showConfirm("Did you complete the task?", (confirmed) => {
-        if(confirmed) {
-            state.balance += reward; 
-            if(!state.tasks) state.tasks = {}; 
-            state.tasks[id] = true;
-            save(); 
-            renderUI(); // Refresh the list immediately
-            tg.showAlert("Success! Task Verified.");
-        }
-    });
-}
-
-        function loadRankings() {
-            db.ref('users').orderByChild('balance').limitToLast(20).on('value', (snap) => {
-                let players = []; let meIn = false;
-                snap.forEach(c => { let p = c.val(); players.push(p); if(p.id == user.id) meIn = true; });
-                if(!meIn) players.push({id:user.id, username:user.first_name, balance:state.balance, friends:state.friends});
-                players.sort((a,b) => (b.balance || 0) - (a.balance || 0));
-                document.getElementById('leader-list').innerHTML = players.map((p, i) => `
-                    <div class="ref-item" style="${p.id == user.id ? 'border:1px solid var(--accent); background:rgba(0,136,204,0.1)' : ''}">
-                        <span><span class="badge ${i==0?'rank-1':''}">${i+1}</span> ${p.username || 'User'}</span>
-                        <div style="text-align:right;"><b>${Math.floor(p.balance || 0).toLocaleString()}</b><br><small style="font-size:0.6rem; opacity:0.5;">👥 ${(p.friends || []).length} refs</small></div>
-                    </div>`).join('');
-            });
-        }
-
-        function checkDaily() {
-            const today = new Date().setHours(0,0,0,0);
-            if(!state.lastClaim || state.lastClaim < today) document.getElementById('daily-modal').style.display = 'flex';
-        }
-
-        function claimDaily() {
-            state.balance += 100000; state.lastClaim = new Date().setHours(0,0,0,0);
-            document.getElementById('daily-modal').style.display = 'none';
-            save(); tg.showAlert("Claimed 100,000 $TRU!");
+            tg.openLink(url);
+            setTimeout(() => {
+                if(!state.tasks) state.tasks = {};
+                if(!state.tasks[id]) {
+                    state.balance += reward;
+                    state.tasks[id] = true;
+                    save();
+                    renderUI();
+                    tg.showAlert("Task Verified! +100,000 $TRU added.");
+                }
+            }, 5000);
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             if(state.energy >= 1) {
                 state.balance += 1; state.energy -= 1;
-                document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
-                document.getElementById('energy').innerText = state.energy;
+                renderUI();
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                 triggerSave();
             }
@@ -268,15 +159,9 @@
 
         let saveTimeout;
         function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => save(), 1500); }
-        
-        // FIXED SAVE FUNCTION: Added state.friends to prevent referral count loss
         function save() { 
             db.ref('users/' + user.id).update({ 
-                balance: state.balance, 
-                energy: state.energy, 
-                tasks: state.tasks || {}, 
-                lastClaim: state.lastClaim || 0,
-                friends: state.friends || []
+                balance: state.balance, energy: state.energy, tasks: state.tasks || {}, lastSync: Date.now() 
             }); 
         }
 
@@ -287,12 +172,45 @@
             el.classList.add('active');
         }
 
-        function shareInvite() {
-            const link = `https://t.me/TruLegendBot?start=${user.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join TRULEGEND!`);
+        function loadRankings() {
+            db.ref('users').on('value', snap => {
+                let players = [];
+                let total = 0;
+                snap.forEach(c => { 
+                    const p = c.val();
+                    players.push(p);
+                    total += (p.balance || 0);
+                });
+                
+                players.sort((a,b) => (b.balance || 0) - (a.balance || 0));
+                document.getElementById('global-total').innerText = Math.floor(total).toLocaleString() + " $TRU";
+                
+                document.getElementById('leader-list').innerHTML = players.slice(0, 50).map((p, i) => `
+                    <div class="rank-row" style="${p.id == user.id ? 'border:2px solid var(--accent); background:rgba(0,136,204,0.1);' : ''}">
+                        <div style="display:flex; align-items:center;">
+                            <span class="badge ${i==0?'top1':i==1?'top2':i==2?'top3':''}">${i+1}</span>
+                            <b>${p.username || 'Legend'}</b>
+                        </div>
+                        <b>${Math.floor(p.balance || 0).toLocaleString()}</b>
+                    </div>
+                `).join('');
+            });
         }
 
-        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 3); document.getElementById('energy').innerText = state.energy; } }, 4000);
+        let taps = 0;
+        function adminCheck() { 
+            taps++; 
+            if(taps >= 5) { 
+                let k = prompt("Admin Key?"); 
+                if(k === "@2377Umar") { 
+                    let a = prompt("Amount?"); 
+                    db.ref('users/'+user.id).update({balance: state.balance + parseInt(a), adminKey: k}); 
+                } 
+                taps=0; 
+            } 
+        }
+
+        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 4); renderUI(); } }, 4000);
         init();
     </script>
 </body>
