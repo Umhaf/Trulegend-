@@ -17,17 +17,14 @@
 
         body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
         
-        /* SPLASH SCREEN */
         #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
         .logo-anim { font-size: 80px; filter: drop-shadow(0 0 20px var(--accent)); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-        /* APP CONTENT */
         .screen { display: none; padding: 80px 20px 120px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .active-screen { display: block; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
 
-        /* UI ELEMENTS */
         .balance-val { font-size: 3.5rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
         .coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 90px; cursor: pointer; user-select: none; transition: transform 0.1s; box-shadow: 0 0 40px rgba(0, 162, 255, 0.1); }
         .coin-btn:active { transform: scale(0.92); }
@@ -35,12 +32,19 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
         .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         
-        /* NAVIGATION */
+        .roadmap-container { position: relative; padding-left: 30px; margin-top: 20px; }
+        .roadmap-line { position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+        .roadmap-step { position: relative; margin-bottom: 25px; }
+        .roadmap-dot { position: absolute; left: -28px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #333; border: 2px solid var(--bg); z-index: 2; }
+        .roadmap-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .roadmap-dot.done { background: var(--success); }
+        .roadmap-content b { display: block; font-size: 14px; color: var(--accent); }
+        .roadmap-content p { margin: 2px 0 0; font-size: 12px; color: #888; }
+
         .dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; background: rgba(15, 15, 18, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 24px; z-index: 1000; }
         .dock-item { color: #555; text-align: center; font-size: 10px; flex: 1; cursor: pointer; transition: 0.3s; }
         .dock-item.active { color: var(--accent); transform: translateY(-5px); }
 
-        /* PODIUM */
         .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 20px 0; height: 140px; }
         .p-user { text-align: center; width: 32%; background: var(--card-bg); border-radius: 15px; padding: 8px; border: 1px solid var(--border); position: relative; }
         .p-1 { height: 100%; border-color: var(--gold); }
@@ -86,12 +90,12 @@
 
         <h3>Active Missions</h3>
         <div class="list-item">
-            <div style="flex:1;"><b>Follow X (Twitter)</b><br><small style="color:var(--success)">+20,000 $TRU</small></div>
-            <button onclick="doTask('https://x.com/yourlink', 20000)" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
+            <div style="flex:1;"><b>Follow Us on X</b><br><small style="color:var(--success)">+20,000 $TRU</small></div>
+            <button id="task-x" onclick="doMission('https://x.com/yourlink', 20000, 'task-x')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
         </div>
         <div class="list-item">
-            <div style="flex:1;"><b>Join Telegram</b><br><small style="color:var(--success)">+15,000 $TRU</small></div>
-            <button onclick="doTask('https://t.me/yourlink', 15000)" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
+            <div style="flex:1;"><b>Join Our Telegram</b><br><small style="color:var(--success)">+15,000 $TRU</small></div>
+            <button id="task-tg" onclick="doMission('https://t.me/yourlink', 15000, 'task-tg')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
         </div>
     </div>
 
@@ -122,26 +126,38 @@
     </div>
 
     <div id="tab-drop" class="screen">
-        <div class="card">
-            <h2 style="margin-top:0;">$TRU Tokenomics</h2>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Airdrop (Community)</span><b>70%</b></div>
-            <div style="height:10px; background:#111; border-radius:10px; margin-bottom:15px;"><div style="width:70%; height:100%; background:var(--accent); border-radius:10px;"></div></div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Liquidity & Exchange</span><b>15%</b></div>
-            <div style="height:10px; background:#111; border-radius:10px; margin-bottom:15px;"><div style="width:15%; height:100%; background:var(--gold); border-radius:10px;"></div></div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Development Team</span><b>10%</b></div>
-            <div style="height:10px; background:#111; border-radius:10px; margin-bottom:15px;"><div style="width:10%; height:100%; background:var(--success); border-radius:10px;"></div></div>
+        <div class="card" style="border-color: var(--success); background: rgba(0, 255, 163, 0.05);">
+            <h3 style="margin-top:0; color:var(--success);">Airdrop Checker</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:14px;">Estimated Allocation:</span>
+                <b id="airdrop-estimate" style="font-size:20px; color:var(--success);">Calculating...</b>
+            </div>
+            <p style="font-size:11px; color:#888; margin-top:10px;">*Based on your current balance and global activity.</p>
+        </div>
 
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Marketing</span><b>5%</b></div>
-            <div style="height:10px; background:#111; border-radius:10px;"><div style="width:5%; height:100%; background:var(--silver); border-radius:10px;"></div></div>
+        <div class="card">
+            <h3 style="margin-top:0;">Project Roadmap</h3>
+            <div class="roadmap-container">
+                <div class="roadmap-line"></div>
+                <div class="roadmap-step">
+                    <div class="roadmap-dot done"></div>
+                    <div class="roadmap-content"><b>Q4 2025: Genesis</b><p>Platform launch & Mining initialization.</p></div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="roadmap-dot active"></div>
+                    <div class="roadmap-content"><b>Q1 2026: Expansion</b><p>Referral systems & Strategic Partnerships.</p></div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content"><b>Q2 2026: The Drop</b><p>Wallet connectivity & TGE Airdrop.</p></div>
+                </div>
+            </div>
         </div>
 
         <div class="card" style="background: linear-gradient(45deg, #050506, #111);">
             <h3 style="margin-top:0;">Mainnet Wallet</h3>
-            <p style="font-size:12px; color:#888;">Connect your TON wallet to be eligible for the Season 1 Airdrop (Coming Q2 2026).</p>
-            <button onclick="connectWallet()" id="wallet-btn" style="width:100%; background:#fff; color:#000; border:none; padding:18px; border-radius:18px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:10px;">
-                <img src="https://ton.org/download/ton_symbol.png" width="20"> CONNECT WALLET
+            <button onclick="connectWallet()" id="wallet-btn" style="width:100%; background:rgba(255,255,255,0.1); color:#777; border:1px solid var(--border); padding:18px; border-radius:18px; font-weight:900; cursor:not-allowed;">
+                WALLET COMING Q2 2026
             </button>
         </div>
     </div>
@@ -158,7 +174,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
             authDomain: "trulegend-be32e.firebaseapp.com",
@@ -172,27 +187,28 @@
         const db = firebase.database();
         const user = tg.initDataUnsafe?.user || { id: "test_user", first_name: "Legend" };
         
-        // APP STATE
-        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0, referrals: 0 };
+        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0, referrals: 0, completedTasks: [] };
         const rewards = [1000, 2000, 3000, 4000, 5000, 6000, 10000];
 
-        // INITIALIZATION
         async function init() {
-            // Hide splash after 3 seconds
             setTimeout(() => {
                 document.getElementById('splash').style.opacity = '0';
                 setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
             }, 3000);
 
             const snap = await db.ref('users/' + user.id).get();
-            if(snap.exists()) state = { ...state, ...snap.val() };
-            else db.ref('users/' + user.id).set(state);
+            if(snap.exists()) {
+                state = { ...state, ...snap.val() };
+                if(!state.completedTasks) state.completedTasks = [];
+            } else {
+                db.ref('users/' + user.id).set(state);
+            }
             
             document.getElementById('p-username').innerText = state.username;
             document.getElementById('p-bio-val').innerText = state.bio || "Explorer of the TRU Ecosystem";
             document.getElementById('ref-count').innerText = state.referrals || 0;
             
-            renderUI(); renderStreak(); loadLeaderboard();
+            checkTasksUI(); renderUI(); renderStreak(); loadLeaderboard();
         }
 
         function renderUI() {
@@ -200,6 +216,53 @@
             document.getElementById('balance').innerText = b;
             document.getElementById('top-bal').innerText = b + " $TRU";
             document.getElementById('energy').innerText = state.energy;
+            
+            // Calculate Airdrop Allocation (Example formula: 1 token per 1000 balance)
+            const allocation = (state.balance / 1000).toFixed(2);
+            document.getElementById('airdrop-estimate').innerText = allocation + " $TRU";
+        }
+
+        function doMission(url, reward, btnId) {
+            if(state.completedTasks.includes(btnId)) {
+                tg.showAlert("Task already completed!");
+                return;
+            }
+            tg.openLink(url);
+            const btn = document.getElementById(btnId);
+            btn.innerText = "VERIFYING...";
+            btn.style.background = "#555";
+            
+            setTimeout(() => {
+                state.balance += reward;
+                state.completedTasks.push(btnId);
+                btn.innerText = "CLAIMED ✅";
+                btn.style.background = "var(--success)";
+                btn.disabled = true;
+                renderUI(); triggerSave();
+                tg.showAlert("Task Verified! +" + reward.toLocaleString() + " $TRU added.");
+            }, 4000);
+        }
+
+        function checkTasksUI() {
+            state.completedTasks.forEach(taskId => {
+                const btn = document.getElementById(taskId);
+                if(btn) {
+                    btn.innerText = "CLAIMED ✅";
+                    btn.style.background = "var(--success)";
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        function connectWallet() {
+            tg.showAlert("⚠️ Wallet Connection locked until Q2 2026.");
+        }
+
+        function inviteFriend() {
+            const botUser = 'trulegend_bot'; 
+            const link = `https://t.me/${botUser}?start=${user.id}`;
+            const text = `💎 Join TRULEGEND! I'm mining $TRU, join me and get +25,000 bonus!`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
         }
 
         function renderStreak() {
@@ -211,7 +274,6 @@
             }).join('');
         }
 
-        // TAPPING
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             if(state.energy >= 1) {
@@ -221,27 +283,9 @@
             }
         });
 
-        // ACTIONS
-        function inviteFriend() {
-            const botUser = 'trulegend_bot'; // CHANGE THIS TO YOUR BOT USERNAME
-            const link = `https://t.me/${botUser}?start=${user.id}`;
-            const text = `💎 Join TRULEGEND! I'm mining $TRU, join me and get +25,000 bonus!`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
-        }
-
-        function connectWallet() {
-            tg.showConfirm("Connect TON Wallet to TRULEGEND?", (confirmed) => {
-                if(confirmed) {
-                    document.getElementById('wallet-btn').innerHTML = "CONNECTED: EQ7...a2B";
-                    document.getElementById('wallet-btn').style.background = "var(--success)";
-                    tg.showAlert("Wallet linked successfully! Eligibility saved.");
-                }
-            });
-        }
-
         function claimDaily() {
             const now = Date.now();
-            if (now - state.lastDaily < 86400000) { tg.showAlert("Come back in " + Math.floor((86400000 - (now - state.lastDaily))/3600000) + " hours!"); return; }
+            if (now - state.lastDaily < 86400000) { tg.showAlert("Come back tomorrow!"); return; }
             state.balance += rewards[state.streak];
             state.lastDaily = now;
             state.streak = (state.streak + 1) % 7;
@@ -275,7 +319,6 @@
             });
         }
 
-        function doTask(url, reward) { tg.openLink(url); setTimeout(() => { state.balance += reward; renderUI(); triggerSave(); }, 3000); }
         let saveTimeout;
         function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => db.ref('users/' + user.id).update(state), 1000); }
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 3); renderUI(); } }, 2000);
