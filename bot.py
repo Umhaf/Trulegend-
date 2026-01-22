@@ -6,7 +6,7 @@ from firebase_admin import credentials, db
 
 # 1. FIREBASE SETUP
 # Download your serviceAccountKey.json from Firebase Console -> Project Settings -> Service Accounts
-cred = credentials.Certificate("serviceAccountKey.json")
+cred = credentials.Certificate("/home/Legend130/serviceAccountKey.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://trulegend-be32e-default-rtdb.firebaseio.com'
 })
