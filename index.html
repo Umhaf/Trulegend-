@@ -3,145 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRULEGEND: Official Hub</title>
+    <title>TRULEGEND: Pro Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #0088cc; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.06); --border: rgba(255,255,255,0.1); --success: #00ffa3; --warning: #ffcc00; --bronze: #cd7f32; --silver: #c0c0c0; --gold: #ffd700; --platinum: #e5e4e2; --diamond: #b9f2ff; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; -webkit-user-select: none; }
-        #loader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--glass); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .header-ui { position: fixed; top: 0; width: 100%; height: 65px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-sizing: border-box; z-index: 1000; background: rgba(10,10,11,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
-        .screen { display: none; padding: 25px 20px; height: calc(100vh - 140px); overflow-y: auto; margin-top: 65px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
-        .active-screen { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        :root { 
+            --accent: #00a2ff; --bg: #050506; --card-bg: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.08); --success: #00ffa3; 
+            --gold: #ffcf4b; --silver: #c0c0c0; --bronze: #cd7f32;
+        }
+
+        body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        .screen { display: none; padding: 80px 20px 120px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        .active-screen { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+        /* TOKENOMICS & CARDS */
+        .token-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
+        .roadmap-step { position: relative; padding-left: 30px; border-left: 2px solid var(--border); margin-bottom: 25px; margin-left: 10px; }
+        .roadmap-step::before { content: ''; position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .roadmap-step.active { border-left-color: var(--accent); }
+        .roadmap-step.active::before { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
         
-        /* Cards & Buttons */
-        .card { background: var(--glass); padding: 20px; border-radius: 24px; border: 1px solid var(--border); margin-bottom: 15px; }
-        .btn-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 16px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.2s; }
-        .btn-sm { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 12px; font-size: 12px; min-width: 80px; }
-        .btn-sm.waiting { background: var(--glass); color: var(--warning); border: 1px solid var(--warning); pointer-events: none; }
-        .btn-sm.claimed { background: var(--success); color: #000; font-weight: 800; pointer-events: none; }
+        /* MINE SCREEN */
+        .balance-val { font-size: 3.8rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
+        .coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 80px; box-shadow: 0 0 40px rgba(0, 162, 255, 0.2); cursor: pointer; transition: transform 0.1s; }
 
-        /* Game Mechanics */
-        .balance { font-size: 3.5rem; font-weight: 900; text-align: center; margin-top: 10px; letter-spacing: -2px; }
-        .circle-btn { width: 220px; height: 220px; background: radial-gradient(circle at 30% 30%, #0088cc, #001a33); border-radius: 50%; margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 6rem; box-shadow: 0 0 50px rgba(0,136,204,0.3); border: 8px solid rgba(255,255,255,0.05); cursor: pointer; position: relative; }
-        .tap-bubble { position: absolute; color: white; font-weight: 900; font-size: 32px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 9999; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px); } }
+        /* LEADERBOARD PODIUM */
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 10px 0 30px; padding-top: 20px; }
+        .p-user { text-align: center; width: 30%; }
+        .p-avatar { width: 65px; height: 65px; border-radius: 50%; background: var(--card-bg); border: 3px solid var(--border); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 25px; position: relative; }
+        .p-1 .p-avatar { width: 85px; height: 85px; border-color: var(--gold); box-shadow: 0 0 20px rgba(255, 207, 75, 0.2); font-size: 35px; }
+        .p-2 .p-avatar { border-color: var(--silver); }
+        .p-3 .p-avatar { border-color: var(--bronze); }
+        .p-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .p-score { font-size: 10px; color: var(--accent); font-weight: 800; }
+        .crown { position: absolute; top: -15px; font-size: 20px; transform: rotate(-10deg); }
 
-        /* Leaderboard Redesign */
-        .rank-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--glass); border-radius: 20px; border: 1px solid var(--border); margin-bottom: 10px; }
-        .rank-num { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; border-radius: 50%; background: rgba(255,255,255,0.05); }
-        .rank-item.top-0 .rank-num { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
-        .rank-item.top-1 .rank-num { background: var(--silver); color: black; }
-        .rank-item.top-2 .rank-num { background: var(--bronze); color: black; }
-        .rank-info { flex: 1; }
-        .rank-val { font-weight: 900; color: var(--accent); }
-
-        /* Drop Details */
-        .token-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .token-stat:last-child { border: none; }
-        .tag-status { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-
-        .dock { position: fixed; bottom: 0; width: 100%; background: rgba(10,10,11,0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 15px 0 35px; border-top: 1px solid var(--border); z-index: 1000; }
-        .dock-item { opacity: 0.4; font-size: 0.65rem; text-align: center; color: white; flex: 1; cursor: pointer; }
-        .dock-item.active { opacity: 1; color: var(--accent); }
+        /* LISTS & BUTTONS */
+        .dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; background: rgba(15, 15, 18, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 24px; z-index: 1000; }
+        .dock-item { color: #555; text-align: center; font-size: 10px; flex: 1; cursor: pointer; }
+        .dock-item.active { color: var(--accent); }
+        .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 8px; display: flex; align-items: center; }
+        .task-action { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div></div>
-
-    <div class="header-ui">
-        <div style="font-weight: 900; letter-spacing: 1px;">TRU<span style="color:var(--accent)">LEGEND</span></div>
-        <div id="status" style="font-size: 10px; color: var(--success); font-weight: 800;">● NETWORK LIVE</div>
+    <div style="position:fixed; top:20px; width:100%; padding:0 20px; display:flex; justify-content:space-between; z-index:1000; box-sizing:border-box;">
+        <div style="font-weight:900; font-size:18px;">TRU<span style="color:var(--accent)">LEGEND</span></div>
+        <div style="background:var(--card-bg); padding:5px 12px; border-radius:10px; font-size:12px; border:1px solid var(--border);" id="top-bal">0 $TRU</div>
     </div>
 
     <div id="tab-mine" class="screen active-screen">
-        <div style="text-align: center;"><div id="league-display" style="background:var(--bronze); color:white; padding: 5px 15px; border-radius: 12px; font-size: 11px; font-weight: 900;">BRONZE LEAGUE</div></div>
-        <div class="balance" id="balance" onclick="adminCheck()">0</div>
-        <div style="text-align: center; margin-top: 10px;">
-            <span style="background:var(--glass); padding: 10px 25px; border-radius: 30px; border: 1px solid var(--border); font-weight: 800;">
-                ⚡ <span id="energy">1000</span> <small style="color:#555">/ 1000</small>
-            </span>
+        <div class="balance-val" id="balance">0</div>
+        <div class="coin-btn" id="tap-btn">💎</div>
+        <div style="text-align:center;">
+            <div style="font-size:14px; color:var(--accent); font-weight:600;">⚡ <span id="energy">1000</span> / 1000</div>
         </div>
-        <div class="circle-btn" id="tap-btn">💎</div>
     </div>
 
     <div id="tab-tasks" class="screen">
-        <h2>Quests</h2>
-        <div class="card">
-            <div id="streak-list" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:10px;"></div>
-            <button class="btn-main" id="claim-daily-btn" onclick="claimDailyReward()">Claim Daily Check-in</button>
+        <h2 style="margin-bottom:5px;">Earn Tokens</h2>
+        <p style="color:#888; font-size:14px; margin-bottom:20px;">Complete tasks to boost your balance.</p>
+        
+        <div class="list-item">
+            <div style="flex:1;"><b>Join Community</b><br><small style="color:var(--success)">+50,000 $TRU</small></div>
+            <button class="task-action" onclick="doTask('https://t.me/yourchannel', 50000)">GO</button>
         </div>
-        <div class="card">
-            <div id="tasks-container">
-                <div class="token-stat"><b>Join Telegram</b> <button class="btn-sm" id="btn-tg" onclick="startTask('tg')">Start</button></div>
-                <div class="token-stat"><b>Follow on X</b> <button class="btn-sm" id="btn-x" onclick="startTask('x')">Start</button></div>
-                <div class="token-stat"><b>Watch Video</b> <button class="btn-sm" id="btn-web" onclick="startTask('web')">Start</button></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-drop" class="screen">
-        <h2 style="margin-top:0;">Project Airdrop</h2>
-        <div class="card">
-            <div style="text-align:center; margin-bottom: 20px;">
-                <div style="font-size: 12px; opacity:0.6;">CURRENT ESTIMATION</div>
-                <div style="font-size: 1.5rem; font-weight: 900; color: var(--success);">$TRU TOKEN</div>
-            </div>
-            <div class="token-stat"><span>Total Supply</span><b>1,000,000,000</b></div>
-            <div class="token-stat"><span>Mining Allocation</span><b>65% (650M)</b></div>
-            <div class="token-stat"><span>Liquidity</span><b>25%</b></div>
-            <div class="token-stat"><span>Team & Dev</span><b>10%</b></div>
+        
+        <div class="list-item">
+            <div style="flex:1;"><b>Follow X (Twitter)</b><br><small style="color:var(--success)">+30,000 $TRU</small></div>
+            <button class="task-action" onclick="doTask('https://x.com/yourprofile', 30000)">GO</button>
         </div>
 
-        <h2 style="margin-top:20px;">Listing Phases</h2>
-        <div class="card">
-            <div class="token-stat">
-                <div>Phase 1: Mining <br><small style="opacity:0.5;">Earn $TRU by tapping</small></div>
-                <span class="tag-status" style="background:var(--success); color:black;">Active</span>
-            </div>
-            <div class="token-stat">
-                <div>Phase 2: Wallet <br><small style="opacity:0.5;">Q2 2026 Connection</small></div>
-                <span class="tag-status" style="background:var(--glass);">Coming</span>
-            </div>
-            <div class="token-stat">
-                <div>Phase 3: DEX Listing <br><small style="opacity:0.5;">Q3 2026 Distribution</small></div>
-                <span class="tag-status" style="background:var(--glass);">Locked</span>
-            </div>
+        <h3 style="margin-top:25px; font-size:16px;">Referral Tracks</h3>
+        <div class="token-card" style="margin-top:10px;">
+            <div class="stat-line"><span>Friends Invited</span><b id="ref-count">0</b></div>
+            <div class="stat-line"><span>Bonus per Friend</span><b style="color:var(--accent)">+100k $TRU</b></div>
+            <button onclick="shareRef()" style="width:100%; padding:15px; border-radius:15px; border:none; background:#fff; color:#000; font-weight:900; margin-top:10px;">INVITE A LEGEND</button>
         </div>
-        <button class="btn-main" onclick="tg.showAlert('Connections open Q2 2026')">Connect Wallet</button>
     </div>
 
     <div id="tab-rank" class="screen">
-        <h2 style="margin-top:0;">Hall of Fame</h2>
-        <div class="card" style="text-align:center; background:linear-gradient(45deg, #0088cc, #004466); border:none;">
-            <div style="font-size: 11px; font-weight: 800; opacity: 0.8;">TOTAL ECOSYSTEM BALANCE</div>
-            <div id="global-total" style="font-size: 2rem; font-weight: 900;">0</div>
+        <h2 style="text-align:center; margin-bottom:5px;">Hall of Fame</h2>
+        <div class="podium">
+            <div class="p-user p-2"><div class="p-avatar">🥈</div><span class="p-name" id="n-2">...</span><span class="p-score" id="s-2">0</span></div>
+            <div class="p-user p-1"><div class="p-avatar"><span class="crown">👑</span>🥇</div><span class="p-name" id="n-1">...</span><span class="p-score" id="s-1">0</span></div>
+            <div class="p-user p-3"><div class="p-avatar">🥉</div><span class="p-name" id="n-3">...</span><span class="p-score" id="s-3">0</span></div>
         </div>
-        <div id="leader-list" style="margin-top:20px;"></div>
+        <div id="leader-list"></div>
+    </div>
+
+    <div id="tab-profile" class="screen">
+        <h2 style="text-align:center;">User Profile</h2>
+        <div class="token-card" style="text-align:center;">
+            <div style="width:60px; height:60px; background:var(--accent); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:24px;">👤</div>
+            <h3 id="p-username" style="margin:0;">Legend</h3>
+            <div style="font-size:12px; color:var(--accent); margin-top:5px;">GLOBAL RANK: <span id="p-rank">#--</span></div>
+        </div>
+        <input type="text" id="bio-input" placeholder="Set your status..." style="width:100%; background:var(--card-bg); border:1px solid var(--border); color:white; padding:15px; border-radius:15px; box-sizing:border-box;">
+        <button onclick="saveBio()" style="width:100%; background:white; color:black; border:none; padding:15px; border-radius:15px; font-weight:900; margin-top:10px;">SAVE BIO</button>
+    </div>
+
+    <div id="tab-drop" class="screen">
+        <h2 style="margin-bottom:5px;">Airdrop Hub</h2>
+        <div class="token-card">
+            <h3 style="margin-top:0; font-size:16px; color:var(--accent);">TOKENOMICS</h3>
+            <div class="stat-line"><span>Max Supply</span><b>1,000,000,000 $TRU</b></div>
+            <div class="stat-line"><span>Community Mining</span><b>65%</b></div>
+            <div class="stat-line"><span>Liquidity & Marketing</span><b>20%</b></div>
+            <div class="stat-line"><span>Team Allocation</span><b>15%</b></div>
+        </div>
+        <div class="token-card">
+            <h3 style="margin-top:0; font-size:16px; color:var(--gold);">ROADMAP</h3>
+            <div class="roadmap-step active"><b>Phase 1: Tapping</b><small style="color:#888;display:block;">Live Mining.</small></div>
+            <div class="roadmap-step"><b>Phase 2: Distribution</b><small style="color:#888;display:block;">Q2 2026: Wallet Connect.</small></div>
+        </div>
+        <button style="width:100%; background:#fff; color:#000; border:none; padding:18px; border-radius:20px; font-weight:900;" onclick="tg.showAlert('Wait until Q2 2026')">CONNECT WALLET</button>
     </div>
 
     <div class="dock">
         <div class="dock-item active" onclick="switchTab('mine', this)">⛏️<br>MINE</div>
-        <div class="dock-item" onclick="switchTab('tasks', this)">🏆<br>QUESTS</div>
-        <div class="dock-item" onclick="switchTab('drop', this)">💰<br>DROP</div>
+        <div class="dock-item" onclick="switchTab('tasks', this)">📋<br>TASKS</div>
         <div class="dock-item" onclick="switchTab('rank', this)">📊<br>RANK</div>
+        <div class="dock-item" onclick="switchTab('profile', this)">👤<br>PROFILE</div>
+        <div class="dock-item" onclick="switchTab('drop', this)">💰<br>DROP</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
-
-        const BOT_USERNAME = "YourBotName_bot"; 
-        const TASKS_CONFIG = {
-            tg: { link: "https://t.me/YourChannel", reward: 50000 },
-            x: { link: "https://x.com/YourProfile", reward: 30000 },
-            web: { link: "https://youtube.com", reward: 20000 }
-        };
 
         const firebaseConfig = {
             apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
@@ -155,89 +150,74 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const user = tg.initDataUnsafe?.user || { id: "dev_user", first_name: "Explorer" };
-        let state = { balance: 0, energy: 1000, referrals: 0, lastSync: Date.now(), tasks: {}, streak: 0, lastClaim: 0 };
-        const streakRewards = [1000, 2000, 5000, 8000, 10000, 12000, 15000];
+        const user = tg.initDataUnsafe?.user || { id: "user_test", first_name: "Legend" };
+        let state = { balance: 0, energy: 1000, bio: "", username: user.first_name, referrals: 0 };
 
         async function init() {
             const snap = await db.ref('users/' + user.id).get();
-            if(snap.exists()) {
-                state = { ...state, ...snap.val() };
-                const elapsed = Math.floor((Date.now() - (state.lastSync || Date.now())) / 4000);
-                state.energy = Math.min(1000, (state.energy || 0) + (elapsed * 4));
-            } else { save(); }
-            document.getElementById('loader').style.display = 'none';
-            renderUI(); renderStreak(); loadRankings();
+            if(snap.exists()) state = { ...state, ...snap.val() };
+            document.getElementById('p-username').innerText = state.username;
+            document.getElementById('bio-input').value = state.bio || "";
+            renderUI();
+            loadLeaderboard();
         }
 
         function renderUI() {
-            document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
+            const b = Math.floor(state.balance).toLocaleString();
+            document.getElementById('balance').innerText = b;
+            document.getElementById('top-bal').innerText = b + " $TRU";
             document.getElementById('energy').innerText = state.energy;
-            
-            Object.keys(TASKS_CONFIG).forEach(id => {
-                const b = document.getElementById('btn-' + id);
-                if(!b) return;
-                const taskData = state.tasks?.[id];
-                if(taskData === true) { b.innerText = "Claimed"; b.className = "btn-sm claimed"; }
-                else if(typeof taskData === 'number') {
-                    const remaining = Math.ceil((60000 - (Date.now() - taskData)) / 1000);
-                    if(remaining > 0) { b.innerText = `${remaining}s`; b.className = "btn-sm waiting"; }
-                    else { b.innerText = "Claim"; b.className = "btn-sm"; b.onclick = () => claimTask(id); }
-                }
-            });
+            document.getElementById('ref-count').innerText = state.referrals || 0;
         }
 
-        function renderStreak() {
-            const container = document.getElementById('streak-list');
-            container.innerHTML = streakRewards.map((reward, i) => {
-                let status = i < state.streak ? "claimed" : (i === state.streak ? "current" : "");
-                let style = status === "claimed" ? "border-color:var(--success)" : (status === "current" ? "border-color:var(--accent)" : "");
-                return `<div class="day-box" style="${style}; min-width:60px; height:70px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--glass); border-radius:15px; border:1px solid var(--border); font-size:10px;">
-                    Day ${i+1}<br><b>+${reward/1000}k</b>
-                </div>`;
-            }).join('');
-        }
-
-        function loadRankings() {
-            db.ref('users').orderByChild('balance').limitToLast(50).on('value', snap => {
-                let players = []; let total = 0;
-                snap.forEach(c => { players.push(c.val()); total += (c.val().balance || 0); });
-                document.getElementById('global-total').innerText = Math.floor(total).toLocaleString();
-                document.getElementById('leader-list').innerHTML = players.reverse().map((p, i) => `
-                    <div class="rank-item ${i < 3 ? 'top-'+i : ''}">
-                        <div class="rank-num">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</div>
-                        <div class="rank-info">
-                            <div style="font-weight:700;">${p.username || 'User'}</div>
-                            <small style="opacity:0.5;">Explorer</small>
-                        </div>
-                        <div class="rank-val">${Math.floor(p.balance).toLocaleString()}</div>
-                    </div>`).join('');
-            });
-        }
-
-        // --- Core Game Functions ---
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if(state.energy >= 1) {
-                    state.balance += 1; state.energy -= 1;
-                    const t = e.changedTouches[i];
-                    const b = document.createElement('div'); b.className='tap-bubble'; b.innerText='+1';
-                    b.style.left=t.pageX+'px'; b.style.top=t.pageY+'px'; document.body.appendChild(b);
-                    setTimeout(()=>b.remove(), 800);
-                }
+            if(state.energy >= 1) {
+                state.balance += 1; state.energy -= 1;
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                renderUI(); triggerSave();
             }
-            renderUI(); triggerSave();
         });
 
-        function startTask(id) { if(state.tasks?.[id]) return; tg.openLink(TASKS_CONFIG[id].link); if(!state.tasks) state.tasks = {}; state.tasks[id] = Date.now(); save(); renderUI(); }
-        function claimTask(id) { state.balance += TASKS_CONFIG[id].reward; state.tasks[id] = true; save(); renderUI(); }
-        function claimDailyReward() { if(Date.now() - (state.lastClaim || 0) < 86400000) return; state.balance += streakRewards[state.streak % 7]; state.streak += 1; state.lastClaim = Date.now(); save(); renderUI(); renderStreak(); }
-        let saveTimeout; function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => save(), 1000); }
-        function save() { db.ref('users/' + user.id).update({ ...state, lastSync: Date.now() }); }
-        function switchTab(t, el) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen')); document.getElementById('tab-' + t).classList.add('active-screen'); document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active')); el.classList.add('active'); }
-        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 4); renderUI(); } }, 4000);
-        function adminCheck() { let k = prompt("Key?"); if(k === "@2377Umar") { let amt = parseInt(prompt("Amt?")); if(!isNaN(amt)) { state.balance += amt; save(); renderUI(); } } }
+        function switchTab(t, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById('tab-' + t).classList.add('active-screen');
+            document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function doTask(url, reward) {
+            tg.openLink(url);
+            setTimeout(() => {
+                state.balance += reward;
+                tg.showAlert(`Task Verified! +${reward.toLocaleString()} $TRU`);
+                renderUI(); triggerSave();
+            }, 2000);
+        }
+
+        function shareRef() {
+            const link = `https://t.me/YourBotName?start=${user.id}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join TRULEGEND!`);
+        }
+
+        function loadLeaderboard() {
+            db.ref('users').orderByChild('balance').limitToLast(20).on('value', snap => {
+                let players = []; snap.forEach(p => players.push(p.val()));
+                players = players.reverse();
+                if(players[0]) { document.getElementById('n-1').innerText = players[0].username; document.getElementById('s-1').innerText = Math.floor(players[0].balance).toLocaleString(); }
+                if(players[1]) { document.getElementById('n-2').innerText = players[1].username; document.getElementById('s-2').innerText = Math.floor(players[1].balance).toLocaleString(); }
+                if(players[2]) { document.getElementById('n-3').innerText = players[2].username; document.getElementById('s-3').innerText = Math.floor(players[2].balance).toLocaleString(); }
+                const myIdx = players.findIndex(p => p.id == user.id);
+                if(myIdx !== -1) document.getElementById('p-rank').innerText = "#" + (myIdx + 1);
+                document.getElementById('leader-list').innerHTML = players.slice(3).map((p, i) => `
+                    <div class="list-item"><span style="width:30px; opacity:0.5;">${i + 4}</span><span style="flex:1;">${p.username}</span><b style="color:var(--accent);">${Math.floor(p.balance).toLocaleString()}</b></div>`).join('');
+            });
+        }
+
+        function saveBio() { state.bio = document.getElementById('bio-input').value; db.ref('users/' + user.id).update({ bio: state.bio }); tg.showAlert("Bio Saved!"); }
+        let saveTimeout;
+        function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => db.ref('users/' + user.id).update(state), 1000); }
+        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 3); renderUI(); } }, 3000);
         init();
     </script>
 </body>
