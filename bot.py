@@ -5,15 +5,16 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 # 1. FIREBASE SETUP
-# Download your serviceAccountKey.json from Firebase Console -> Project Settings -> Service Accounts
+# Ensure serviceAccountKey.json is actually located in /home/Legend130/
 cred = credentials.Certificate("/home/Legend130/serviceAccountKey.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://trulegend-be32e-default-rtdb.firebaseio.com'
 })
 
 # 2. BOT CONFIG
-'8398377608:AAFz-1BO20B325T5e4TrYXJPxwrwWpWruAI'
-MINI_APP_URL = 'https://trulegendbot.netlify.app' # The link to your hosted HTML file
+# FIXED: Assigned the token string to the BOT_TOKEN variable
+BOT_TOKEN = '8398377608:AAFz-1BO20B325T5e4TrYXJPxwrwWpWruAI'
+MINI_APP_URL = 'https://trulegendbot.netlify.app' 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -69,6 +70,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 def main():
+    # Application now correctly uses the BOT_TOKEN variable
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     print("Bot is running...")
