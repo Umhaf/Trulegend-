@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRULEGEND: Pro Elite</title>
+    <title>TRULEGEND PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -21,116 +21,107 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
 
         /* MINE SCREEN */
-        .balance-val { font-size: 3.8rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
-        .coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 80px; box-shadow: 0 0 40px rgba(0, 162, 255, 0.2); cursor: pointer; user-select: none; }
+        .balance-val { font-size: 3.5rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
+        .coin-btn { width: 210px; height: 210px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 80px; cursor: pointer; user-select: none; transition: transform 0.1s; }
+        .coin-btn:active { transform: scale(0.92); }
 
-        /* TOKENOMICS STYLES */
-        .token-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
-        .stat-line { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-        .progress-bar { height: 6px; background: var(--border); border-radius: 10px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); }
+        /* STREAK DESIGN */
+        .streak-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
+        .streak-grid { display: flex; justify-content: space-between; margin-top: 10px; }
+        .streak-day { width: 12%; text-align: center; font-size: 10px; color: #666; }
+        .streak-dot { width: 35px; height: 35px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); font-weight: 900; color: #fff; }
+        .streak-dot.active { background: var(--accent); border-color: #fff; color: #000; }
+        .streak-dot.claimed { background: var(--success); border-color: var(--success); color: #000; }
 
-        /* REDESIGNED PROFILE CARD */
-        .profile-header { background: linear-gradient(180deg, var(--accent) 0%, transparent 100%); padding: 30px 20px; border-radius: 30px; text-align: center; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        .profile-header::after { content: 'LEGEND'; position: absolute; top: 10px; right: -20px; font-size: 40px; font-weight: 900; opacity: 0.05; transform: rotate(15deg); }
-        .profile-avatar { width: 90px; height: 90px; background: #000; border: 3px solid #fff; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .p-badge { background: #fff; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; margin-top: 8px; display: inline-block; }
+        /* RANK PODIUM */
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 20px 0; height: 150px; }
+        .p-user { text-align: center; width: 32%; background: var(--card-bg); border-radius: 15px; padding: 8px; border: 1px solid var(--border); position: relative; }
+        .p-1 { height: 100%; border-color: var(--gold); }
+        .p-2 { height: 85%; border-color: var(--silver); }
+        .p-3 { height: 75%; border-color: var(--bronze); }
+        .p-name { font-size: 10px; font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 5px; }
 
-        /* LEADERBOARD PODIUM */
-        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 20px 0 30px; }
-        .p-user { text-align: center; width: 30%; }
-        .p-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--border); margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .p-1 .p-avatar { width: 80px; height: 80px; border-color: var(--gold); font-size: 30px; }
-
-        /* DOCK */
+        /* LISTS & DOCK */
+        .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         .dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; background: rgba(15, 15, 18, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 24px; z-index: 1000; }
         .dock-item { color: #555; text-align: center; font-size: 10px; flex: 1; cursor: pointer; }
         .dock-item.active { color: var(--accent); }
-        .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 14px; margin-bottom: 8px; display: flex; align-items: center; }
     </style>
 </head>
 <body>
 
     <div style="position:fixed; top:20px; width:100%; padding:0 20px; display:flex; justify-content:space-between; z-index:1000; box-sizing:border-box;">
-        <div style="font-weight:900; letter-spacing: 1px;">TRU<span style="color:var(--accent)">LEGEND</span></div>
-        <div style="background:rgba(255,255,255,0.1); padding:6px 14px; border-radius:12px; font-size:12px; font-weight:700; border:1px solid var(--border);" id="top-bal">0 $TRU</div>
+        <div style="font-weight:900;">TRU<span style="color:var(--accent)">LEGEND</span></div>
+        <div id="top-bal" style="background:var(--card-bg); padding:6px 14px; border-radius:12px; font-size:12px; font-weight:700; border:1px solid var(--border);">0 $TRU</div>
     </div>
 
     <div id="tab-mine" class="screen active-screen">
         <div class="balance-val" id="balance">0</div>
         <div class="coin-btn" id="tap-btn">💎</div>
         <div style="text-align:center;">
-            <div style="font-size:14px; color:var(--accent); font-weight:600; background: rgba(0,162,255,0.1); display: inline-block; padding: 5px 15px; border-radius: 20px;">⚡ <span id="energy">1000</span> / 1000</div>
+            <div style="font-size:14px; color:var(--accent); font-weight:700;">⚡ <span id="energy">1000</span> / 1000</div>
         </div>
     </div>
 
     <div id="tab-tasks" class="screen">
-        <h2 style="font-weight:900;">Elite Tasks</h2>
-        <div class="list-item">
-            <div style="flex:1;"><b>Join Telegram Channel</b><br><small style="color:var(--success)">+50,000 $TRU</small></div>
-            <button onclick="doTask('https://t.me/yourchannel', 50000)" style="background:var(--accent); border:none; color:white; padding:10px 20px; border-radius:12px; font-weight:700;">GO</button>
+        <div class="streak-container">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b>7-Day Rewards</b>
+                <button onclick="claimDaily()" style="background:var(--accent); border:none; color:black; padding:8px 15px; border-radius:10px; font-weight:900;">CLAIM</button>
+            </div>
+            <div class="streak-grid" id="streak-grid"></div>
         </div>
+        <h3>Tasks</h3>
         <div class="list-item">
-            <div style="flex:1;"><b>Follow on X</b><br><small style="color:var(--success)">+25,000 $TRU</small></div>
-            <button onclick="doTask('https://x.com/yourprofile', 25000)" style="background:var(--accent); border:none; color:white; padding:10px 20px; border-radius:12px; font-weight:700;">GO</button>
+            <div style="flex:1;"><b>Join Community</b><br><small>+50,000 $TRU</small></div>
+            <button onclick="doTask('https://t.me/yourlink', 50000)" style="background:var(--accent); border:none; color:white; padding:10px 20px; border-radius:12px; font-weight:700;">GO</button>
         </div>
     </div>
 
     <div id="tab-rank" class="screen">
-        <div style="text-align:center; margin-bottom:15px;">
-            <small style="color:#888; letter-spacing: 1px;">GLOBAL ECOSYSTEM SUPPLY</small>
+        <div style="text-align:center;">
+            <small style="color:#888;">TOTAL MINED</small>
             <div id="total-mined" style="font-size:26px; font-weight:900; color:var(--success);">0</div>
         </div>
         <div class="podium">
-            <div class="p-user p-2"><div class="p-avatar">🥈</div><span class="p-name" id="n-2">...</span><span class="p-score" id="s-2">0</span></div>
-            <div class="p-user p-1"><div class="p-avatar">🥇</div><span class="p-name" id="n-1">...</span><span class="p-score" id="s-1">0</span></div>
-            <div class="p-user p-3"><div class="p-avatar">🥉</div><span class="p-name" id="n-3">...</span><span class="p-score" id="s-3">0</span></div>
+            <div class="p-user p-2"><div class="p-avatar">🥈</div><span class="p-name" id="n-2">...</span><b class="p-score" id="s-2">0</b></div>
+            <div class="p-user p-1"><div class="p-avatar">🥇</div><span class="p-name" id="n-1">...</span><b class="p-score" id="s-1">0</b></div>
+            <div class="p-user p-3"><div class="p-avatar">🥉</div><span class="p-name" id="n-3">...</span><b class="p-score" id="s-3">0</b></div>
         </div>
-        <div id="leader-list" style="padding-bottom:100px;"></div>
+        <div id="leader-list"></div>
     </div>
 
     <div id="tab-profile" class="screen">
-        <div class="profile-header">
-            <div class="profile-avatar">👤</div>
-            <h2 id="p-username" style="margin:0; font-weight:900; letter-spacing:-1px; font-size:28px;">Legend</h2>
-            <div class="p-badge">Verified Miner</div>
-            <div style="margin-top:15px; display:flex; justify-content:center; gap:20px;">
-                <div><small style="display:block; opacity:0.6;">Global Rank</small><b id="p-rank">#--</b></div>
-                <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
-                <div><small style="display:block; opacity:0.6;">Status</small><b>Active</b></div>
-            </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 85px; height: 85px; background: #000; border: 3px solid #fff; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 40px;">👤</div>
+            <h2 id="p-username" style="margin:0;">Legend</h2>
+            <p id="p-bio-val" style="opacity:0.7;">No bio set</p>
         </div>
-        
-        <div style="margin-top:20px;">
-            <label style="font-size:12px; color:#888; margin-left:10px;">LEGEND BIO</label>
-            <input type="text" id="bio-input" placeholder="Set your legacy..." style="width:100%; background:var(--card-bg); border:1px solid var(--border); color:white; padding:18px; border-radius:20px; box-sizing:border-box; margin-top:5px; font-size:16px;">
-            <button onclick="saveBio()" style="width:100%; background:#fff; color:#000; border:none; padding:18px; border-radius:20px; font-weight:900; margin-top:15px; cursor:pointer;">UPDATE PROFILE</button>
-        </div>
+        <input type="text" id="bio-input" placeholder="New bio..." style="width:100%; padding:15px; background:var(--card-bg); border:1px solid var(--border); color:white; border-radius:15px; box-sizing:border-box;">
+        <button onclick="saveBio()" style="width:100%; background:#fff; color:#000; border:none; padding:15px; border-radius:15px; font-weight:900; margin-top:10px;">SAVE</button>
     </div>
 
     <div id="tab-drop" class="screen">
-        <h2 style="font-weight:900;">$TRU Tokenomics</h2>
-        <div class="token-card">
-            <h3 style="margin-top:0; color:var(--accent);">Distribution</h3>
-            <div class="stat-line"><span>Community Mining</span><b>65%</b></div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 65%;"></div></div>
-            
-            <div class="stat-line" style="margin-top:15px;"><span>Liquidity & DEX</span><b>20%</b></div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 20%; background:var(--gold);"></div></div>
-            
-            <div class="stat-line" style="margin-top:15px;"><span>Core Contributors</span><b>15%</b></div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 15%; background:#888;"></div></div>
+        <h2>Tokenomics</h2>
+        <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 18px; margin-bottom: 15px;">
+            <div style="display:flex; justify-content:space-between;"><span>Community Mined</span><b>65%</b></div>
+            <div style="height:8px; background:var(--border); border-radius:10px; overflow:hidden; margin:8px 0 15px;"><div style="width:65%; height:100%; background:var(--accent);"></div></div>
+            <div style="display:flex; justify-content:space-between;"><span>Liquidity Pool</span><b>20%</b></div>
+            <div style="height:8px; background:var(--border); border-radius:10px; overflow:hidden; margin:8px 0 15px;"><div style="width:20%; height:100%; background:var(--gold);"></div></div>
+            <div style="display:flex; justify-content:space-between;"><span>Core Team</span><b>15%</b></div>
+            <div style="height:8px; background:var(--border); border-radius:10px; overflow:hidden; margin:8px 0;"><div style="width:15%; height:100%; background:#555;"></div></div>
         </div>
-
-        <div class="token-card">
-            <h3 style="margin-top:0; color:var(--gold);">Mining Roadmap</h3>
+        
+        <h3 style="margin-top:20px;">Roadmap</h3>
+        <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 18px; margin-bottom: 20px; font-size:14px;">
             <div style="border-left: 2px solid var(--accent); padding-left: 15px;">
-                <p><b>Q1 2026:</b> Tap-to-Earn Launch (Current)</p>
-                <p style="opacity:0.5;"><b>Q2 2026:</b> On-chain Wallet Verification</p>
-                <p style="opacity:0.5;"><b>Q3 2026:</b> TGE & DEX Listing</p>
+                <p><b>Q1:</b> Launch & Mining Engine</p>
+                <p style="opacity:0.4;"><b>Q2:</b> Wallet Connect & Listing</p>
+                <p style="opacity:0.4;"><b>Q3:</b> Full Ecosystem Swap</p>
             </div>
         </div>
-        <button onclick="tg.showAlert('Connectivity opens in Phase 2!')" style="width:100%; padding:20px; border-radius:20px; background:white; color:black; font-weight:900; border:none; font-size:16px;">CONNECT WALLET</button>
+
+        <button onclick="connectWallet()" style="width:100%; background:#fff; color:#000; border:none; padding:20px; border-radius:20px; font-weight:900; font-size:16px;">CONNECT WALLET</button>
     </div>
 
     <div class="dock">
@@ -143,8 +134,6 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
-
         const firebaseConfig = {
             apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
             authDomain: "trulegend-be32e.firebaseapp.com",
@@ -156,21 +145,18 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         const user = tg.initDataUnsafe?.user || { id: "user_test", first_name: "Legend" };
-        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name };
+        
+        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0 };
+        const rewards = [1000, 2000, 3000, 4000, 5000, 6000, 10000];
 
         async function init() {
             const snap = await db.ref('users/' + user.id).get();
-            if(snap.exists()) {
-                state = { ...state, ...snap.val() };
-            } else {
-                db.ref('users/' + user.id).set(state);
-            }
+            if(snap.exists()) state = { ...state, ...snap.val() };
+            else db.ref('users/' + user.id).set(state);
             document.getElementById('p-username').innerText = state.username;
-            document.getElementById('bio-input').value = state.bio || "";
-            renderUI();
-            loadLeaderboard();
+            document.getElementById('p-bio-val').innerText = state.bio || "No bio set";
+            renderUI(); renderStreak(); loadLeaderboard();
         }
 
         function renderUI() {
@@ -178,6 +164,14 @@
             document.getElementById('balance').innerText = b;
             document.getElementById('top-bal').innerText = b + " $TRU";
             document.getElementById('energy').innerText = state.energy;
+        }
+
+        function renderStreak() {
+            const grid = document.getElementById('streak-grid');
+            grid.innerHTML = rewards.map((r, i) => {
+                let status = i < state.streak ? "claimed" : (i === state.streak ? "active" : "");
+                return `<div class="streak-day"><div class="streak-dot ${status}">${i+1}</div>${r/1000}k</div>`;
+            }).join('');
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
@@ -189,8 +183,28 @@
             }
         });
 
+        function claimDaily() {
+            const now = Date.now();
+            if (now - state.lastDaily < 86400000) { tg.showAlert("Come back tomorrow!"); return; }
+            if (now - state.lastDaily > 172800000) state.streak = 0;
+            const reward = rewards[state.streak];
+            state.balance += reward; state.lastDaily = now; state.streak = (state.streak + 1) % 7;
+            renderUI(); renderStreak(); triggerSave();
+            tg.showAlert(`Claimed +${reward.toLocaleString()} $TRU!`);
+        }
+
+        function connectWallet() {
+            tg.showAlert("Wallet connection opens in Quarter 2 (April–June) 2026. Stay tuned!");
+        }
+
+        function saveBio() {
+            const val = document.getElementById('bio-input').value;
+            state.bio = val; db.ref('users/' + user.id).update({ bio: val });
+            document.getElementById('p-bio-val').innerText = val; tg.showAlert("Bio saved!");
+        }
+
         function loadLeaderboard() {
-            db.ref('users').orderByChild('balance').limitToLast(50).on('value', snap => {
+            db.ref('users').orderByChild('balance').limitToLast(15).on('value', snap => {
                 let players = []; let total = 0;
                 snap.forEach(p => { let d = p.val(); players.push(d); total += d.balance; });
                 players = players.reverse();
@@ -198,10 +212,8 @@
                 if(players[0]) { document.getElementById('n-1').innerText = players[0].username; document.getElementById('s-1').innerText = Math.floor(players[0].balance).toLocaleString(); }
                 if(players[1]) { document.getElementById('n-2').innerText = players[1].username; document.getElementById('s-2').innerText = Math.floor(players[1].balance).toLocaleString(); }
                 if(players[2]) { document.getElementById('n-3').innerText = players[2].username; document.getElementById('s-3').innerText = Math.floor(players[2].balance).toLocaleString(); }
-                const myIdx = players.findIndex(p => p.id == user.id);
-                if(myIdx !== -1) document.getElementById('p-rank').innerText = "#" + (myIdx + 1);
-                document.getElementById('leader-list').innerHTML = players.slice(3, 15).map((p, i) => `
-                    <div class="list-item"><span style="width:30px;opacity:0.5;font-weight:900;">${i+4}</span><span style="flex:1;">${p.username}</span><b>${Math.floor(p.balance).toLocaleString()}</b></div>`).join('');
+                document.getElementById('leader-list').innerHTML = players.slice(3).map((p, i) => `
+                    <div class="list-item"><span>${i+4}. ${p.username}</span><b style="margin-left:auto;">${Math.floor(p.balance).toLocaleString()}</b></div>`).join('');
             });
         }
 
@@ -212,28 +224,14 @@
             el.classList.add('active');
         }
 
-        function saveBio() { 
-            state.bio = document.getElementById('bio-input').value; 
-            db.ref('users/' + user.id).update({ bio: state.bio });
-            tg.showAlert("Profile Legacy Updated!"); 
-        }
-
         function doTask(url, reward) {
             tg.openLink(url);
-            setTimeout(() => {
-                state.balance += reward;
-                renderUI(); triggerSave();
-                tg.showAlert("Success! Reward claimed.");
-            }, 3000);
+            setTimeout(() => { state.balance += reward; renderUI(); triggerSave(); }, 2000);
         }
 
         let saveTimeout;
-        function triggerSave() { 
-            clearTimeout(saveTimeout); 
-            saveTimeout = setTimeout(() => db.ref('users/' + user.id).update({ balance: state.balance, energy: state.energy }), 800); 
-        }
-
-        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 3); renderUI(); } }, 3000);
+        function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => db.ref('users/' + user.id).update(state), 800); }
+        setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
         init();
     </script>
 </body>
