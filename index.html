@@ -32,7 +32,6 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
         .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         
-        /* Roadmap Styles */
         .roadmap-container { position: relative; padding-left: 30px; margin-top: 20px; }
         .roadmap-line { position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
         .roadmap-step { position: relative; margin-bottom: 25px; }
@@ -183,8 +182,13 @@
         async function init() {
             setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 3000);
             const snap = await db.ref('users/' + user.id).get();
-            if(snap.exists()) { state = { ...state, ...snap.val() }; if(!state.completedTasks) state.completedTasks = []; } 
-            else { db.ref('users/' + user.id).set(state); }
+            if(snap.exists()) { 
+                state = { ...state, ...snap.val() }; 
+                if(!state.completedTasks) state.completedTasks = []; 
+            } else { 
+                // Create new user only if they don't exist
+                db.ref('users/' + user.id).set(state); 
+            }
             document.getElementById('p-username').innerText = state.username;
             document.getElementById('p-bio-val').innerText = state.bio || "Explorer";
             renderUI(); renderStreak(); loadLeaderboard(); checkTasksUI();
@@ -211,8 +215,14 @@
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             if(state.energy >= 1) {
-                state.balance += 1; state.energy -= 1;
-                renderUI(); triggerSave();
+                state.balance += 1; 
+                state.energy -= 1;
+                renderUI(); 
+                // SAFE UPDATE: Only sends balance and energy to prevent resets
+                db.ref('users/' + user.id).update({ 
+                    balance: state.balance, 
+                    energy: state.energy 
+                });
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             }
         });
@@ -226,7 +236,12 @@
                 state.balance += reward;
                 state.completedTasks.push(btnId);
                 btn.innerText = "DONE ✅"; btn.disabled = true;
-                renderUI(); triggerSave();
+                renderUI(); 
+                // SAFE UPDATE
+                db.ref('users/' + user.id).update({ 
+                    balance: state.balance, 
+                    completedTasks: state.completedTasks 
+                });
             }, 5000);
         }
 
@@ -235,7 +250,7 @@
         }
 
         function inviteFriend() {
-            // FIXED USERNAME
+            // FIXED USERNAME: trulegendbot
             const botUsername = 'trulegendbot'; 
             const link = `https://t.me/${botUsername}?start=${user.id}`;
             const text = "💎 Join TRULEGEND PRO! Mine $TRU coins with me.";
@@ -256,12 +271,18 @@
             state.balance += dailyRewards[state.streak];
             state.lastDaily = now;
             state.streak = (state.streak + 1) % 7;
-            renderUI(); renderStreak(); triggerSave();
+            renderUI(); renderStreak();
+            // SAFE UPDATE
+            db.ref('users/' + user.id).update({ 
+                balance: state.balance, 
+                lastDaily: state.lastDaily, 
+                streak: state.streak 
+            });
             tg.showAlert("Daily Bonus Claimed!");
         }
 
         function loadLeaderboard() {
-            // INDEXED BY BALANCE
+            // USES INDEXED BALANCE FOR ACCURATE RANKING
             db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
                 let players = []; let total = 0;
                 snap.forEach(p => { let data = p.val(); players.push(data); total += (data.balance || 0); });
@@ -281,8 +302,7 @@
 
         function connectWallet() { tg.showAlert("Wallet Connection: Coming Q2 2026."); }
 
-        let saveTimeout;
-        function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => db.ref('users/' + user.id).update(state), 1000); }
+        // ENERGY RECOVERY
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
         
         init();
