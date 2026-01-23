@@ -47,7 +47,7 @@
         .dock-item.active { color: var(--accent); transform: translateY(-5px); }
 
         .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 20px 0; height: 140px; }
-        .p-user { text-align: center; width: 32%; background: var(--card-bg); border-radius: 15px; padding: 8px; border: 1px solid var(--border); position: relative; }
+        .p-user { text-align: center; width: 32%; background: var(--card-bg); border-radius: 15px; padding: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
         .p-1 { height: 100%; border-color: var(--gold); }
         .p-2 { height: 85%; border-color: var(--silver); }
         .p-3 { height: 75%; border-color: var(--bronze); }
@@ -171,13 +171,7 @@
         tg.expand();
 
         const firebaseConfig = {
-            apiKey: "AIzaSyC2O8gD1lWx9QFS4FBZCrECjJ-icafg6ds",
-            authDomain: "trulegend-be32e.firebaseapp.com",
             databaseURL: "https://trulegend-be32e-default-rtdb.firebaseio.com",
-            projectId: "trulegend-be32e",
-            storageBucket: "trulegend-be32e.firebasestorage.app",
-            messagingSenderId: "462505787354",
-            appId: "1:462505787354:web:60a34512cef1f26ef34ae3"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -202,8 +196,6 @@
             document.getElementById('top-bal').innerText = b + " $TRU";
             document.getElementById('energy').innerText = state.energy;
             document.getElementById('ref-count').innerText = state.referrals || 0;
-            
-            // Airdrop Estimator Logic (Simple math: 1 Token per 500 mined coins)
             const estimation = (state.balance / 500).toFixed(2);
             document.getElementById('airdrop-estimate').innerText = estimation + " $TRU";
         }
@@ -213,6 +205,7 @@
             document.getElementById('tab-' + t).classList.add('active-screen');
             document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
             el.classList.add('active');
+            if(t === 'rank') loadLeaderboard();
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
@@ -242,13 +235,12 @@
         }
 
         function inviteFriend() {
-    // Corrected: removed the underscore to match @trulegendbot
-    const botUsername = 'trulegendbot'; 
-    const link = `https://t.me/${botUsername}?start=${user.id}`;
-    
-    const text = "💎 Join TRULEGEND PRO! Mine $TRU coins with me.";
-    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
-     }
+            // FIXED USERNAME
+            const botUsername = 'trulegendbot'; 
+            const link = `https://t.me/${botUsername}?start=${user.id}`;
+            const text = "💎 Join TRULEGEND PRO! Mine $TRU coins with me.";
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+        }
 
         function renderStreak() {
             const grid = document.getElementById('streak-grid');
@@ -269,9 +261,12 @@
         }
 
         function loadLeaderboard() {
+            // INDEXED BY BALANCE
             db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
-                let players = []; snap.forEach(p => players.push(p.val()));
+                let players = []; let total = 0;
+                snap.forEach(p => { let data = p.val(); players.push(data); total += (data.balance || 0); });
                 players = players.reverse();
+                document.getElementById('total-mined').innerText = Math.floor(total).toLocaleString();
                 if(players[0]) { document.getElementById('n-1').innerText = players[0].username; document.getElementById('s-1').innerText = Math.floor(players[0].balance).toLocaleString(); }
                 if(players[1]) { document.getElementById('n-2').innerText = players[1].username; document.getElementById('s-2').innerText = Math.floor(players[1].balance).toLocaleString(); }
                 if(players[2]) { document.getElementById('n-3').innerText = players[2].username; document.getElementById('s-3').innerText = Math.floor(players[2].balance).toLocaleString(); }
