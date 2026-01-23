@@ -26,7 +26,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
 
         .balance-val { font-size: 3.5rem; font-weight: 900; text-align: center; margin: 10px 0; letter-spacing: -2px; }
-        .coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 30px auto; display: flex; align-items: center; justify-content: center; font-size: 90px; cursor: pointer; user-select: none; transition: transform 0.1s; box-shadow: 0 0 40px rgba(0, 162, 255, 0.1); }
+        .coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #1a1a1f 0%, #000 100%); border-radius: 50%; border: 8px solid var(--border); margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 90px; cursor: pointer; user-select: none; transition: transform 0.1s; box-shadow: 0 0 40px rgba(0, 162, 255, 0.1); }
         .coin-btn:active { transform: scale(0.92); }
         
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
@@ -50,6 +50,9 @@
         .p-1 { height: 100%; border-color: var(--gold); }
         .p-2 { height: 85%; border-color: var(--silver); }
         .p-3 { height: 75%; border-color: var(--bronze); }
+        
+        .boost-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 12px; text-align: center; flex: 1; cursor: pointer; transition: 0.2s; }
+        .boost-card:active { transform: scale(0.95); background: rgba(255,255,255,0.08); }
     </style>
 </head>
 <body>
@@ -68,8 +71,22 @@
     <div id="tab-mine" class="screen active-screen">
         <div class="balance-val" id="balance">0</div>
         <div class="coin-btn" id="tap-btn">💎</div>
+        
         <div style="text-align:center;">
-            <div style="font-size:14px; color:var(--accent); font-weight:700; background:rgba(0,162,255,0.1); padding:8px 20px; border-radius:20px; display:inline-block;">⚡ <span id="energy">1000</span> / 1000</div>
+            <div style="font-size:14px; color:var(--accent); font-weight:700; background:rgba(0,162,255,0.1); padding:8px 20px; border-radius:20px; display:inline-block; margin-bottom: 15px;">
+                ⚡ <span id="energy">1000</span> / 1000
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; padding: 0 10px;">
+                <div onclick="buyBooster('full')" class="boost-card" style="border-color: var(--success);">
+                    <small style="color: var(--success); font-weight: 900; font-size: 10px;">FULL TANK</small><br>
+                    <b style="font-size: 12px;">FREE DAILY</b>
+                </div>
+                <div onclick="buyBooster('multi')" class="boost-card" style="border-color: var(--accent);">
+                    <small style="color: var(--accent); font-weight: 900; font-size: 10px;">MULTITAP</small><br>
+                    <b id="multi-cost" style="font-size: 12px;">5,000 $TRU</b>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -169,14 +186,13 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const firebaseConfig = {
-            databaseURL: "https://trulegend-be32e-default-rtdb.firebaseio.com",
-        };
+        const firebaseConfig = { databaseURL: "https://trulegend-be32e-default-rtdb.firebaseio.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const user = tg.initDataUnsafe?.user || { id: "dev_test", first_name: "Legend" };
         
-        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0, referrals: 0, completedTasks: [] };
+        // Initial State
+        let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0, referrals: 0, completedTasks: [], multiLevel: 1, lastFullRefill: 0 };
         const dailyRewards = [1000, 2000, 3000, 4000, 5000, 6000, 10000];
 
         async function init() {
@@ -184,13 +200,14 @@
             const snap = await db.ref('users/' + user.id).get();
             if(snap.exists()) { 
                 state = { ...state, ...snap.val() }; 
-                if(!state.completedTasks) state.completedTasks = []; 
+                if(!state.completedTasks) state.completedTasks = [];
+                if(!state.multiLevel) state.multiLevel = 1;
             } else { 
-                // Create new user only if they don't exist
                 db.ref('users/' + user.id).set(state); 
             }
             document.getElementById('p-username').innerText = state.username;
             document.getElementById('p-bio-val').innerText = state.bio || "Explorer";
+            document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
             renderUI(); renderStreak(); loadLeaderboard(); checkTasksUI();
         }
 
@@ -214,18 +231,44 @@
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if(state.energy >= 1) {
-                state.balance += 1; 
-                state.energy -= 1;
+            let power = state.multiLevel || 1;
+            if(state.energy >= power) {
+                state.balance += power; 
+                state.energy -= power;
                 renderUI(); 
-                // SAFE UPDATE: Only sends balance and energy to prevent resets
-                db.ref('users/' + user.id).update({ 
-                    balance: state.balance, 
-                    energy: state.energy 
-                });
+                // SAFE UPDATE
+                db.ref('users/' + user.id).update({ balance: state.balance, energy: state.energy });
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             }
         });
+
+        function buyBooster(type) {
+            if (type === 'full') {
+                const now = Date.now();
+                if (now - (state.lastFullRefill || 0) < 86400000) {
+                    tg.showAlert("Full Tank available once every 24h!");
+                    return;
+                }
+                state.energy = 1000;
+                state.lastFullRefill = now;
+                db.ref('users/' + user.id).update({ energy: 1000, lastFullRefill: now });
+                renderUI();
+                tg.showAlert("Energy Refilled!");
+            } 
+            if (type === 'multi') {
+                let cost = state.multiLevel * 5000;
+                if (state.balance >= cost) {
+                    state.balance -= cost;
+                    state.multiLevel += 1;
+                    db.ref('users/' + user.id).update({ balance: state.balance, multiLevel: state.multiLevel });
+                    renderUI();
+                    document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
+                    tg.showAlert("Multitap Upgraded!");
+                } else {
+                    tg.showAlert("Not enough $TRU!");
+                }
+            }
+        }
 
         function doMission(url, reward, btnId) {
             if(state.completedTasks.includes(btnId)) return;
@@ -237,11 +280,7 @@
                 state.completedTasks.push(btnId);
                 btn.innerText = "DONE ✅"; btn.disabled = true;
                 renderUI(); 
-                // SAFE UPDATE
-                db.ref('users/' + user.id).update({ 
-                    balance: state.balance, 
-                    completedTasks: state.completedTasks 
-                });
+                db.ref('users/' + user.id).update({ balance: state.balance, completedTasks: state.completedTasks });
             }, 5000);
         }
 
@@ -250,11 +289,9 @@
         }
 
         function inviteFriend() {
-            // FIXED USERNAME: trulegendbot
-            const botUsername = 'trulegendbot'; 
+            const botUsername = 'trulegendbot'; //
             const link = `https://t.me/${botUsername}?start=${user.id}`;
-            const text = "💎 Join TRULEGEND PRO! Mine $TRU coins with me.";
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me on TRULEGEND!`);
         }
 
         function renderStreak() {
@@ -272,17 +309,11 @@
             state.lastDaily = now;
             state.streak = (state.streak + 1) % 7;
             renderUI(); renderStreak();
-            // SAFE UPDATE
-            db.ref('users/' + user.id).update({ 
-                balance: state.balance, 
-                lastDaily: state.lastDaily, 
-                streak: state.streak 
-            });
+            db.ref('users/' + user.id).update({ balance: state.balance, lastDaily: state.lastDaily, streak: state.streak });
             tg.showAlert("Daily Bonus Claimed!");
         }
 
         function loadLeaderboard() {
-            // USES INDEXED BALANCE FOR ACCURATE RANKING
             db.ref('users').orderByChild('balance').limitToLast(10).on('value', snap => {
                 let players = []; let total = 0;
                 snap.forEach(p => { let data = p.val(); players.push(data); total += (data.balance || 0); });
@@ -301,8 +332,6 @@
         }
 
         function connectWallet() { tg.showAlert("Wallet Connection: Coming Q2 2026."); }
-
-        // ENERGY RECOVERY
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
         
         init();
