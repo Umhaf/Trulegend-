@@ -32,6 +32,12 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
         .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         
+        /* NEW PROFILE STYLES */
+        .badge { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 15px; text-align: center; border: 1px solid var(--border); font-size: 10px; flex: 1; }
+        .badge.earned { border-color: var(--gold); background: rgba(255, 207, 75, 0.05); }
+        .stat-box { flex: 1; text-align: center; background: rgba(255,255,255,0.03); border-radius: 15px; padding: 10px; border: 1px solid var(--border); }
+        
+        /* ROADMAP STYLES */
         .roadmap-container { position: relative; padding-left: 30px; margin-top: 20px; }
         .roadmap-line { position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
         .roadmap-step { position: relative; margin-bottom: 25px; }
@@ -53,6 +59,21 @@
         
         .boost-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 12px; text-align: center; flex: 1; cursor: pointer; transition: 0.2s; }
         .boost-card:active { transform: scale(0.95); background: rgba(255,255,255,0.08); }
+
+        .tap-particle {
+            position: absolute;
+            color: #fff;
+            font-weight: 900;
+            font-size: 28px;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 9999;
+            text-shadow: 0 0 10px var(--accent);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-120px) scale(1.2); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -94,7 +115,7 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <b>7-Day Check-in</b>
-                <button onclick="claimDaily()" style="background:var(--accent); border:none; color:black; padding:8px 15px; border-radius:12px; font-weight:900;">CLAIM</button>
+                <button id="daily-btn" onclick="claimDaily()" style="background:var(--accent); border:none; color:black; padding:8px 15px; border-radius:12px; font-weight:900;">CLAIM</button>
             </div>
             <div style="display:flex; justify-content:space-between; margin-top:15px;" id="streak-grid"></div>
         </div>
@@ -126,14 +147,42 @@
     </div>
 
     <div id="tab-profile" class="screen">
-        <div class="card" style="text-align:center;">
-            <div style="width:70px; height:70px; background:#111; border:2px solid var(--accent); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:30px;">👤</div>
-            <h2 id="p-username" style="margin:0;">Legend</h2>
-            <p id="p-bio-val" style="color:#666; font-size:12px; margin-top:5px;">Explorer</p>
+        <div class="card" style="text-align:center; position: relative;">
+            <div style="width:75px; height:75px; background:linear-gradient(135deg, #111, #222); border:2px solid var(--accent); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow: 0 0 15px rgba(0, 162, 255, 0.3);">👤</div>
+            <h2 id="p-username" style="margin:0; letter-spacing: 1px;">Legend</h2>
+            <p id="p-bio-val" style="color:var(--accent); font-size:11px; margin-top:5px; font-weight: 600; text-transform: uppercase;">MASTER TAPPER</p>
+            
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+                <div class="stat-box"><small style="color: #666;">STREAK</small><br><b id="p-streak">0</b></div>
+                <div class="stat-box"><small style="color: #666;">RANK</small><br><b>#--</b></div>
+                <div class="stat-box"><small style="color: #666;">POWER</small><br><b id="p-power">1</b></div>
+            </div>
         </div>
+
+        <h3 style="margin-left: 5px; font-size: 16px;">Achievements</h3>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div class="badge earned">🏅<br><small>OG</small></div>
+            <div class="badge">🔥<br><small>7 DAYS</small></div>
+            <div class="badge">💎<br><small>1M CLUB</small></div>
+            <div class="badge">🤝<br><small>REFERRER</small></div>
+        </div>
+
         <div class="card">
-            <input type="text" id="bio-input" placeholder="Update bio..." style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:15px; box-sizing:border-box;">
-            <button onclick="saveBio()" style="width:100%; background:#fff; color:#000; border:none; padding:15px; border-radius:15px; font-weight:900; margin-top:10px;">SAVE</button>
+            <h4 style="margin:0 0 10px 0; font-size: 14px;">Edit Profile</h4>
+            <input type="text" id="bio-input" placeholder="Set your custom bio..." style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:15px; box-sizing:border-box; outline: none;">
+            <button onclick="saveBio()" style="width:100%; background:#fff; color:#000; border:none; padding:15px; border-radius:15px; font-weight:900; margin-top:10px;">SAVE PROFILE</button>
+        </div>
+
+        <div class="card" style="border-color: var(--border);">
+            <h4 style="margin:0 0 15px 0; font-size: 14px;">Social Verification</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <small>Connect Telegram</small>
+                <b style="color: var(--success);">LINKED ✅</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <small>Connect X (Twitter)</small>
+                <button style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 10px;">LINK</button>
+            </div>
         </div>
     </div>
 
@@ -191,24 +240,21 @@
         const db = firebase.database();
         const user = tg.initDataUnsafe?.user || { id: "dev_test", first_name: "Legend" };
         
-        // Initial State
         let state = { id: user.id, balance: 0, energy: 1000, bio: "", username: user.first_name, lastDaily: 0, streak: 0, referrals: 0, completedTasks: [], multiLevel: 1, lastFullRefill: 0 };
         const dailyRewards = [1000, 2000, 3000, 4000, 5000, 6000, 10000];
 
         async function init() {
             setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 3000);
             const snap = await db.ref('users/' + user.id).get();
-            if(snap.exists()) { 
-                state = { ...state, ...snap.val() }; 
-                if(!state.completedTasks) state.completedTasks = [];
-                if(!state.multiLevel) state.multiLevel = 1;
-            } else { 
-                db.ref('users/' + user.id).set(state); 
-            }
+            if(snap.exists()) { state = { ...state, ...snap.val() }; } 
+            else { db.ref('users/' + user.id).set(state); }
+            
             document.getElementById('p-username').innerText = state.username;
-            document.getElementById('p-bio-val').innerText = state.bio || "Explorer";
-            document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
-            renderUI(); renderStreak(); loadLeaderboard(); checkTasksUI();
+            if(state.bio) document.getElementById('p-bio-val').innerText = state.bio;
+            document.getElementById('multi-cost').innerText = ((state.multiLevel || 1) * 5000).toLocaleString() + " $TRU";
+            
+            renderUI(); renderStreak(); loadLeaderboard();
+            setInterval(updateDailyTimer, 1000);
         }
 
         function renderUI() {
@@ -219,14 +265,10 @@
             document.getElementById('ref-count').innerText = state.referrals || 0;
             const estimation = (state.balance / 500).toFixed(2);
             document.getElementById('airdrop-estimate').innerText = estimation + " $TRU";
-        }
-
-        function switchTab(t, el) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-            document.getElementById('tab-' + t).classList.add('active-screen');
-            document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-            if(t === 'rank') loadLeaderboard();
+            
+            // Update Profile stats
+            if(document.getElementById('p-streak')) document.getElementById('p-streak').innerText = state.streak;
+            if(document.getElementById('p-power')) document.getElementById('p-power').innerText = state.multiLevel || 1;
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
@@ -235,39 +277,62 @@
             if(state.energy >= power) {
                 state.balance += power; 
                 state.energy -= power;
+                
+                const touch = e.touches[0];
+                const particle = document.createElement('div');
+                particle.className = 'tap-particle';
+                particle.innerText = `+${power}`;
+                particle.style.left = `${touch.pageX}px`;
+                particle.style.top = `${touch.pageY}px`;
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+
                 renderUI(); 
-                // SAFE UPDATE
                 db.ref('users/' + user.id).update({ balance: state.balance, energy: state.energy });
-                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             }
         });
+
+        function updateDailyTimer() {
+            const btn = document.getElementById('daily-btn');
+            if(!btn) return;
+            const timeLeft = (state.lastDaily + 86400000) - Date.now();
+            if (timeLeft > 0) {
+                const h = Math.floor(timeLeft / 3600000);
+                const m = Math.floor((timeLeft % 3600000) / 60000);
+                const s = Math.floor((timeLeft % 60000) / 1000);
+                btn.innerText = `${h}h ${m}m ${s}s`;
+                btn.style.background = "#222"; btn.disabled = true;
+            } else {
+                btn.innerText = "CLAIM";
+                btn.style.background = "var(--accent)"; btn.disabled = false;
+            }
+        }
 
         function buyBooster(type) {
             if (type === 'full') {
                 const now = Date.now();
-                if (now - (state.lastFullRefill || 0) < 86400000) {
-                    tg.showAlert("Full Tank available once every 24h!");
-                    return;
-                }
-                state.energy = 1000;
-                state.lastFullRefill = now;
+                if (now - (state.lastFullRefill || 0) < 86400000) { tg.showAlert("Once per day!"); return; }
+                state.energy = 1000; state.lastFullRefill = now;
                 db.ref('users/' + user.id).update({ energy: 1000, lastFullRefill: now });
-                renderUI();
-                tg.showAlert("Energy Refilled!");
+                renderUI(); tg.showAlert("Refilled!");
             } 
             if (type === 'multi') {
-                let cost = state.multiLevel * 5000;
+                let cost = (state.multiLevel || 1) * 5000;
                 if (state.balance >= cost) {
-                    state.balance -= cost;
-                    state.multiLevel += 1;
+                    state.balance -= cost; state.multiLevel = (state.multiLevel || 1) + 1;
                     db.ref('users/' + user.id).update({ balance: state.balance, multiLevel: state.multiLevel });
-                    renderUI();
-                    document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
-                    tg.showAlert("Multitap Upgraded!");
-                } else {
-                    tg.showAlert("Not enough $TRU!");
-                }
+                    renderUI(); document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
+                } else { tg.showAlert("Not enough $TRU!"); }
             }
+        }
+
+        function switchTab(t, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById('tab-' + t).classList.add('active-screen');
+            document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+            if(t === 'rank') loadLeaderboard();
         }
 
         function doMission(url, reward, btnId) {
@@ -284,33 +349,29 @@
             }, 5000);
         }
 
-        function checkTasksUI() {
-            state.completedTasks.forEach(id => { const b = document.getElementById(id); if(b) { b.innerText = "DONE ✅"; b.disabled = true; }});
-        }
-
         function inviteFriend() {
-            const botUsername = 'trulegendbot'; //
+            const botUsername = 'trulegendbot';
             const link = `https://t.me/${botUsername}?start=${user.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me on TRULEGEND!`);
-        }
-
-        function renderStreak() {
-            const grid = document.getElementById('streak-grid');
-            grid.innerHTML = dailyRewards.map((r, i) => {
-                let color = i < state.streak ? 'var(--success)' : (i === state.streak ? 'var(--accent)' : '#222');
-                return `<div style="text-align:center;"><div style="width:28px; height:28px; background:${color}; border-radius:50%; margin:0 auto; font-size:10px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:900;">${i+1}</div></div>`;
-            }).join('');
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me!`);
         }
 
         function claimDaily() {
             const now = Date.now();
-            if (now - state.lastDaily < 86400000) { tg.showAlert("Wait until tomorrow!"); return; }
+            if (now - state.lastDaily < 86400000) return;
             state.balance += dailyRewards[state.streak];
             state.lastDaily = now;
             state.streak = (state.streak + 1) % 7;
             renderUI(); renderStreak();
             db.ref('users/' + user.id).update({ balance: state.balance, lastDaily: state.lastDaily, streak: state.streak });
-            tg.showAlert("Daily Bonus Claimed!");
+        }
+
+        function renderStreak() {
+            const grid = document.getElementById('streak-grid');
+            if(!grid) return;
+            grid.innerHTML = dailyRewards.map((r, i) => {
+                let color = i < state.streak ? 'var(--success)' : (i === state.streak ? 'var(--accent)' : '#222');
+                return `<div style="text-align:center;"><div style="width:28px; height:28px; background:${color}; border-radius:50%; margin:0 auto; font-size:10px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:900;">${i+1}</div></div>`;
+            }).join('');
         }
 
         function loadLeaderboard() {
@@ -328,12 +389,12 @@
 
         function saveBio() {
             const val = document.getElementById('bio-input').value;
-            if(val) { state.bio = val; db.ref('users/' + user.id).update({ bio: val }); document.getElementById('p-bio-val').innerText = val; tg.showAlert("Bio saved!"); }
+            if(val) { state.bio = val; db.ref('users/' + user.id).update({ bio: val }); document.getElementById('p-bio-val').innerText = val; tg.showAlert("Profile Updated!"); }
         }
 
         function connectWallet() { tg.showAlert("Wallet Connection: Coming Q2 2026."); }
+
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
-        
         init();
     </script>
 </body>
