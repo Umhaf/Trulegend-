@@ -32,12 +32,14 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
         .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         
-        /* NEW PROFILE STYLES */
+        /* NEW PROGRESS BAR STYLE */
+        .lvl-progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0 5px; overflow: hidden; border: 1px solid var(--border); }
+        .lvl-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.5s ease; }
+
         .badge { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 15px; text-align: center; border: 1px solid var(--border); font-size: 10px; flex: 1; }
         .badge.earned { border-color: var(--gold); background: rgba(255, 207, 75, 0.05); }
         .stat-box { flex: 1; text-align: center; background: rgba(255,255,255,0.03); border-radius: 15px; padding: 10px; border: 1px solid var(--border); }
-        
-        /* ROADMAP STYLES */
+
         .roadmap-container { position: relative; padding-left: 30px; margin-top: 20px; }
         .roadmap-line { position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
         .roadmap-step { position: relative; margin-bottom: 25px; }
@@ -60,20 +62,8 @@
         .boost-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 12px; text-align: center; flex: 1; cursor: pointer; transition: 0.2s; }
         .boost-card:active { transform: scale(0.95); background: rgba(255,255,255,0.08); }
 
-        .tap-particle {
-            position: absolute;
-            color: #fff;
-            font-weight: 900;
-            font-size: 28px;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
-            z-index: 9999;
-            text-shadow: 0 0 10px var(--accent);
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-120px) scale(1.2); opacity: 0; }
-        }
+        .tap-particle { position: absolute; color: #fff; font-weight: 900; font-size: 28px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 9999; text-shadow: 0 0 10px var(--accent); }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-120px) scale(1.2); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -92,31 +82,20 @@
     <div id="tab-mine" class="screen active-screen">
         <div class="balance-val" id="balance">0</div>
         <div class="coin-btn" id="tap-btn">💎</div>
-        
         <div style="text-align:center;">
             <div style="font-size:14px; color:var(--accent); font-weight:700; background:rgba(0,162,255,0.1); padding:8px 20px; border-radius:20px; display:inline-block; margin-bottom: 15px;">
                 ⚡ <span id="energy">1000</span> / 1000
             </div>
-            
             <div style="display: flex; gap: 10px; justify-content: center; padding: 0 10px;">
-                <div onclick="buyBooster('full')" class="boost-card" style="border-color: var(--success);">
-                    <small style="color: var(--success); font-weight: 900; font-size: 10px;">FULL TANK</small><br>
-                    <b style="font-size: 12px;">FREE DAILY</b>
-                </div>
-                <div onclick="buyBooster('multi')" class="boost-card" style="border-color: var(--accent);">
-                    <small style="color: var(--accent); font-weight: 900; font-size: 10px;">MULTITAP</small><br>
-                    <b id="multi-cost" style="font-size: 12px;">5,000 $TRU</b>
-                </div>
+                <div onclick="buyBooster('full')" class="boost-card" style="border-color: var(--success);"><small style="color: var(--success); font-weight: 900; font-size: 10px;">FULL TANK</small><br><b style="font-size: 12px;">FREE DAILY</b></div>
+                <div onclick="buyBooster('multi')" class="boost-card" style="border-color: var(--accent);"><small style="color: var(--accent); font-weight: 900; font-size: 10px;">MULTITAP</small><br><b id="multi-cost" style="font-size: 12px;">5,000 $TRU</b></div>
             </div>
         </div>
     </div>
 
     <div id="tab-tasks" class="screen">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>7-Day Check-in</b>
-                <button id="daily-btn" onclick="claimDaily()" style="background:var(--accent); border:none; color:black; padding:8px 15px; border-radius:12px; font-weight:900;">CLAIM</button>
-            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><b>7-Day Check-in</b><button id="daily-btn" onclick="claimDaily()" style="background:var(--accent); border:none; color:black; padding:8px 15px; border-radius:12px; font-weight:900;">CLAIM</button></div>
             <div style="display:flex; justify-content:space-between; margin-top:15px;" id="streak-grid"></div>
         </div>
         <div class="card" style="border-color: var(--accent);">
@@ -130,14 +109,15 @@
                 <div style="flex:1;"><b>Follow Us on X</b><br><small style="color:var(--success)">+20,000 $TRU</small></div>
                 <button id="task-x" onclick="doMission('https://x.com/yourlink', 20000, 'task-x')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
             </div>
+            <div class="list-item">
+                <div style="flex:1;"><b>Watch New Video 📺</b><br><small style="color:var(--success)">+50,000 $TRU</small></div>
+                <button id="task-yt-1" onclick="doYouTubeMission('https://youtube.com/', 50000, 'task-yt-1')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
+            </div>
         </div>
     </div>
 
     <div id="tab-rank" class="screen">
-        <div style="text-align:center; margin-bottom:20px;">
-            <small style="color:#888;">TOTAL CIRCULATION</small>
-            <div id="total-mined" style="font-size:28px; font-weight:900; color:var(--success);">0</div>
-        </div>
+        <div style="text-align:center; margin-bottom:20px;"><small style="color:#888;">TOTAL CIRCULATION</small><div id="total-mined" style="font-size:28px; font-weight:900; color:var(--success);">0</div></div>
         <div class="podium">
             <div class="p-user p-2">🥈<br><span id="n-2">...</span><br><b id="s-2">0</b></div>
             <div class="p-user p-1">🥇<br><span id="n-1">...</span><br><b id="s-1">0</b></div>
@@ -147,12 +127,19 @@
     </div>
 
     <div id="tab-profile" class="screen">
-        <div class="card" style="text-align:center; position: relative;">
+        <div class="card" style="text-align:center;">
             <div style="width:75px; height:75px; background:linear-gradient(135deg, #111, #222); border:2px solid var(--accent); border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow: 0 0 15px rgba(0, 162, 255, 0.3);">👤</div>
-            <h2 id="p-username" style="margin:0; letter-spacing: 1px;">Legend</h2>
-            <p id="p-bio-val" style="color:var(--accent); font-size:11px; margin-top:5px; font-weight: 600; text-transform: uppercase;">MASTER TAPPER</p>
+            <h2 id="p-username" style="margin:0;">Legend</h2>
             
-            <div style="display: flex; gap: 8px; margin-top: 20px;">
+            <div style="padding: 0 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-top: 10px;">
+                    <span id="p-rank-label">Bronze Tapper</span>
+                    <span id="p-progress-text">0%</span>
+                </div>
+                <div class="lvl-progress-bg"><div id="lvl-fill" class="lvl-progress-fill"></div></div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
                 <div class="stat-box"><small style="color: #666;">STREAK</small><br><b id="p-streak">0</b></div>
                 <div class="stat-box"><small style="color: #666;">RANK</small><br><b>#--</b></div>
                 <div class="stat-box"><small style="color: #666;">POWER</small><br><b id="p-power">1</b></div>
@@ -172,55 +159,24 @@
             <input type="text" id="bio-input" placeholder="Set your custom bio..." style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; border-radius:15px; box-sizing:border-box; outline: none;">
             <button onclick="saveBio()" style="width:100%; background:#fff; color:#000; border:none; padding:15px; border-radius:15px; font-weight:900; margin-top:10px;">SAVE PROFILE</button>
         </div>
-
-        <div class="card" style="border-color: var(--border);">
-            <h4 style="margin:0 0 15px 0; font-size: 14px;">Social Verification</h4>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <small>Connect Telegram</small>
-                <b style="color: var(--success);">LINKED ✅</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <small>Connect X (Twitter)</small>
-                <button style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 10px;">LINK</button>
-            </div>
-        </div>
     </div>
 
     <div id="tab-drop" class="screen">
         <div class="card" style="border-color: var(--success); background: rgba(0, 255, 163, 0.05);">
             <h3 style="margin-top:0; color:var(--success);">Airdrop Checker</h3>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:14px; color:#aaa;">Estimated Allocation:</span>
-                <b id="airdrop-estimate" style="font-size:24px; color:var(--success);">0.00 $TRU</b>
-            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14px; color:#aaa;">Estimated Allocation:</span><b id="airdrop-estimate" style="font-size:24px; color:var(--success);">0.00 $TRU</b></div>
             <p style="font-size:11px; color:#666; margin-top:10px;">Calculated based on balance & daily streak activity.</p>
         </div>
-
         <div class="card">
             <h3 style="margin-top:0;">Project Roadmap</h3>
             <div class="roadmap-container">
                 <div class="roadmap-line"></div>
-                <div class="roadmap-step">
-                    <div class="roadmap-dot done"></div>
-                    <div class="roadmap-content"><b>Q4 2025: Genesis</b><p>App Launch & Mining initiation.</p></div>
-                </div>
-                <div class="roadmap-step">
-                    <div class="roadmap-dot active"></div>
-                    <div class="roadmap-content"><b>Q1 2026: Expansion</b><p>Referral systems & Strategic Partnerships.</p></div>
-                </div>
-                <div class="roadmap-step">
-                    <div class="roadmap-dot"></div>
-                    <div class="roadmap-content"><b>Q2 2026: The Drop</b><p>TGE, Mainnet & Token Airdrop Claiming.</p></div>
-                </div>
+                <div class="roadmap-step"><div class="roadmap-dot done"></div><div class="roadmap-content"><b>Q4 2025: Genesis</b><p>App Launch & Mining initiation.</p></div></div>
+                <div class="roadmap-step"><div class="roadmap-dot active"></div><div class="roadmap-content"><b>Q1 2026: Expansion</b><p>Referral systems & Strategic Partnerships.</p></div></div>
+                <div class="roadmap-step"><div class="roadmap-dot"></div><div class="roadmap-content"><b>Q2 2026: The Drop</b><p>TGE, Mainnet & Token Airdrop Claiming.</p></div></div>
             </div>
         </div>
-
-        <div class="card" style="background: linear-gradient(45deg, #050506, #111);">
-            <h3 style="margin-top:0;">Mainnet Wallet</h3>
-            <button onclick="connectWallet()" id="wallet-btn" style="width:100%; background:rgba(255,255,255,0.05); color:#666; border:1px solid var(--border); padding:18px; border-radius:18px; font-weight:900; cursor:not-allowed;">
-                WALLET COMING Q2 2026
-            </button>
-        </div>
+        <div class="card" style="background: linear-gradient(45deg, #050506, #111);"><h3 style="margin-top:0;">Mainnet Wallet</h3><button onclick="connectWallet()" id="wallet-btn" style="width:100%; background:rgba(255,255,255,0.05); color:#666; border:1px solid var(--border); padding:18px; border-radius:18px; font-weight:900; cursor:not-allowed;">WALLET COMING Q2 2026</button></div>
     </div>
 
     <div class="dock">
@@ -232,9 +188,7 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
+        const tg = window.Telegram.WebApp; tg.expand();
         const firebaseConfig = { databaseURL: "https://trulegend-be32e-default-rtdb.firebaseio.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -248,11 +202,7 @@
             const snap = await db.ref('users/' + user.id).get();
             if(snap.exists()) { state = { ...state, ...snap.val() }; } 
             else { db.ref('users/' + user.id).set(state); }
-            
             document.getElementById('p-username').innerText = state.username;
-            if(state.bio) document.getElementById('p-bio-val').innerText = state.bio;
-            document.getElementById('multi-cost').innerText = ((state.multiLevel || 1) * 5000).toLocaleString() + " $TRU";
-            
             renderUI(); renderStreak(); loadLeaderboard();
             setInterval(updateDailyTimer, 1000);
         }
@@ -266,27 +216,29 @@
             const estimation = (state.balance / 500).toFixed(2);
             document.getElementById('airdrop-estimate').innerText = estimation + " $TRU";
             
-            // Update Profile stats
+            // PROFILE STATS & PROGRESS
             if(document.getElementById('p-streak')) document.getElementById('p-streak').innerText = state.streak;
             if(document.getElementById('p-power')) document.getElementById('p-power').innerText = state.multiLevel || 1;
+            
+            const nextLevelGoal = 1000000; // Goal: 1 Million $TRU
+            const progress = Math.min(100, (state.balance / nextLevelGoal) * 100);
+            document.getElementById('lvl-fill').style.width = progress + "%";
+            document.getElementById('p-progress-text').innerText = Math.floor(progress) + "%";
+            if(state.balance >= 1000000) document.getElementById('p-rank-label').innerText = "Legendary Tapper 💎";
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             let power = state.multiLevel || 1;
             if(state.energy >= power) {
-                state.balance += power; 
-                state.energy -= power;
-                
+                state.balance += power; state.energy -= power;
                 const touch = e.touches[0];
                 const particle = document.createElement('div');
                 particle.className = 'tap-particle';
                 particle.innerText = `+${power}`;
-                particle.style.left = `${touch.pageX}px`;
-                particle.style.top = `${touch.pageY}px`;
+                particle.style.left = `${touch.pageX}px`; particle.style.top = `${touch.pageY}px`;
                 document.body.appendChild(particle);
                 setTimeout(() => particle.remove(), 800);
-
                 renderUI(); 
                 db.ref('users/' + user.id).update({ balance: state.balance, energy: state.energy });
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -294,84 +246,44 @@
         });
 
         function updateDailyTimer() {
-            const btn = document.getElementById('daily-btn');
-            if(!btn) return;
+            const btn = document.getElementById('daily-btn'); if(!btn) return;
             const timeLeft = (state.lastDaily + 86400000) - Date.now();
             if (timeLeft > 0) {
-                const h = Math.floor(timeLeft / 3600000);
-                const m = Math.floor((timeLeft % 3600000) / 60000);
-                const s = Math.floor((timeLeft % 60000) / 1000);
-                btn.innerText = `${h}h ${m}m ${s}s`;
-                btn.style.background = "#222"; btn.disabled = true;
-            } else {
-                btn.innerText = "CLAIM";
-                btn.style.background = "var(--accent)"; btn.disabled = false;
-            }
+                const h = Math.floor(timeLeft / 3600000); const m = Math.floor((timeLeft % 3600000) / 60000); const s = Math.floor((timeLeft % 60000) / 1000);
+                btn.innerText = `${h}h ${m}m ${s}s`; btn.style.background = "#222"; btn.disabled = true;
+            } else { btn.innerText = "CLAIM"; btn.style.background = "var(--accent)"; btn.disabled = false; }
         }
 
-        function buyBooster(type) {
-            if (type === 'full') {
-                const now = Date.now();
-                if (now - (state.lastFullRefill || 0) < 86400000) { tg.showAlert("Once per day!"); return; }
-                state.energy = 1000; state.lastFullRefill = now;
-                db.ref('users/' + user.id).update({ energy: 1000, lastFullRefill: now });
-                renderUI(); tg.showAlert("Refilled!");
-            } 
-            if (type === 'multi') {
-                let cost = (state.multiLevel || 1) * 5000;
-                if (state.balance >= cost) {
-                    state.balance -= cost; state.multiLevel = (state.multiLevel || 1) + 1;
-                    db.ref('users/' + user.id).update({ balance: state.balance, multiLevel: state.multiLevel });
-                    renderUI(); document.getElementById('multi-cost').innerText = (state.multiLevel * 5000).toLocaleString() + " $TRU";
-                } else { tg.showAlert("Not enough $TRU!"); }
-            }
+        function doYouTubeMission(url, reward, btnId) {
+            if(state.completedTasks.includes(btnId)) return;
+            const btn = document.getElementById(btnId);
+            tg.openLink(url);
+            btn.innerText = "VERIFY (10s)"; btn.style.background = "#444"; btn.disabled = true;
+            let seconds = 10;
+            const timer = setInterval(() => {
+                seconds--; btn.innerText = `VERIFY (${seconds}s)`;
+                if (seconds <= 0) {
+                    clearInterval(timer); btn.innerText = "CLAIM"; btn.style.background = "var(--success)"; btn.disabled = false;
+                    btn.onclick = () => {
+                        state.balance += reward; state.completedTasks.push(btnId);
+                        btn.innerText = "DONE ✅"; btn.disabled = true; renderUI();
+                        db.ref('users/' + user.id).update({ balance: state.balance, completedTasks: state.completedTasks });
+                    };
+                }
+            }, 1000);
         }
 
         function switchTab(t, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
             document.getElementById('tab-' + t).classList.add('active-screen');
             document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-            if(t === 'rank') loadLeaderboard();
-        }
-
-        function doMission(url, reward, btnId) {
-            if(state.completedTasks.includes(btnId)) return;
-            tg.openLink(url);
-            const btn = document.getElementById(btnId);
-            btn.innerText = "WAIT...";
-            setTimeout(() => {
-                state.balance += reward;
-                state.completedTasks.push(btnId);
-                btn.innerText = "DONE ✅"; btn.disabled = true;
-                renderUI(); 
-                db.ref('users/' + user.id).update({ balance: state.balance, completedTasks: state.completedTasks });
-            }, 5000);
-        }
-
-        function inviteFriend() {
-            const botUsername = 'trulegendbot';
-            const link = `https://t.me/${botUsername}?start=${user.id}`;
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Join me!`);
+            el.classList.add('active'); if(t === 'rank') loadLeaderboard();
         }
 
         function claimDaily() {
-            const now = Date.now();
-            if (now - state.lastDaily < 86400000) return;
-            state.balance += dailyRewards[state.streak];
-            state.lastDaily = now;
-            state.streak = (state.streak + 1) % 7;
-            renderUI(); renderStreak();
-            db.ref('users/' + user.id).update({ balance: state.balance, lastDaily: state.lastDaily, streak: state.streak });
-        }
-
-        function renderStreak() {
-            const grid = document.getElementById('streak-grid');
-            if(!grid) return;
-            grid.innerHTML = dailyRewards.map((r, i) => {
-                let color = i < state.streak ? 'var(--success)' : (i === state.streak ? 'var(--accent)' : '#222');
-                return `<div style="text-align:center;"><div style="width:28px; height:28px; background:${color}; border-radius:50%; margin:0 auto; font-size:10px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:900;">${i+1}</div></div>`;
-            }).join('');
+            const now = Date.now(); if (now - state.lastDaily < 86400000) return;
+            state.balance += dailyRewards[state.streak]; state.lastDaily = now; state.streak = (state.streak + 1) % 7;
+            renderUI(); renderStreak(); db.ref('users/' + user.id).update({ balance: state.balance, lastDaily: state.lastDaily, streak: state.streak });
         }
 
         function loadLeaderboard() {
@@ -386,13 +298,22 @@
                 document.getElementById('leader-list').innerHTML = players.slice(3).map((p, i) => `<div class="list-item"><span>${i+4}. ${p.username}</span><b style="margin-left:auto;">${Math.floor(p.balance).toLocaleString()}</b></div>`).join('');
             });
         }
-
-        function saveBio() {
-            const val = document.getElementById('bio-input').value;
-            if(val) { state.bio = val; db.ref('users/' + user.id).update({ bio: val }); document.getElementById('p-bio-val').innerText = val; tg.showAlert("Profile Updated!"); }
+        
+        function buyBooster(type) {
+            if (type === 'full') {
+                const now = Date.now();
+                if (now - (state.lastFullRefill || 0) < 86400000) { tg.showAlert("Once per day!"); return; }
+                state.energy = 1000; state.lastFullRefill = now;
+                db.ref('users/' + user.id).update({ energy: 1000, lastFullRefill: now }); renderUI();
+            } 
+            if (type === 'multi') {
+                let cost = (state.multiLevel || 1) * 5000;
+                if (state.balance >= cost) {
+                    state.balance -= cost; state.multiLevel = (state.multiLevel || 1) + 1;
+                    db.ref('users/' + user.id).update({ balance: state.balance, multiLevel: state.multiLevel }); renderUI();
+                }
+            }
         }
-
-        function connectWallet() { tg.showAlert("Wallet Connection: Coming Q2 2026."); }
 
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
         init();
