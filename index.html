@@ -32,9 +32,16 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
         .list-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; }
         
-        /* NEW PROGRESS BAR STYLE */
+        /* LEVEL BAR WITH GLOW ANIMATION */
         .lvl-progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0 5px; overflow: hidden; border: 1px solid var(--border); }
-        .lvl-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.5s ease; }
+        .lvl-progress-fill { 
+            height: 100%; width: 0%; 
+            background: var(--bronze); 
+            transition: width 0.5s ease, background 0.5s ease; 
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+            animation: glow-move 2s infinite linear;
+        }
+        @keyframes glow-move { 0% { filter: brightness(1); } 50% { filter: brightness(1.4); } 100% { filter: brightness(1); } }
 
         .badge { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 15px; text-align: center; border: 1px solid var(--border); font-size: 10px; flex: 1; }
         .badge.earned { border-color: var(--gold); background: rgba(255, 207, 75, 0.05); }
@@ -107,11 +114,11 @@
         <div id="mission-list">
              <div class="list-item">
                 <div style="flex:1;"><b>Follow Us on X</b><br><small style="color:var(--success)">+20,000 $TRU</small></div>
-                <button id="task-x" onclick="doMission('https://x.com/yourlink', 20000, 'task-x')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
+                <button id="task-x" onclick="doUniversalMission('https://x.com/', 20000, 'task-x')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
             </div>
             <div class="list-item">
                 <div style="flex:1;"><b>Watch New Video 📺</b><br><small style="color:var(--success)">+50,000 $TRU</small></div>
-                <button id="task-yt-1" onclick="doYouTubeMission('https://youtube.com/', 50000, 'task-yt-1')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
+                <button id="task-yt-1" onclick="doUniversalMission('https://youtube.com/', 50000, 'task-yt-1')" style="background:var(--accent); border:none; color:white; padding:10px 18px; border-radius:12px; font-weight:700;">GO</button>
             </div>
         </div>
     </div>
@@ -216,15 +223,22 @@
             const estimation = (state.balance / 500).toFixed(2);
             document.getElementById('airdrop-estimate').innerText = estimation + " $TRU";
             
-            // PROFILE STATS & PROGRESS
             if(document.getElementById('p-streak')) document.getElementById('p-streak').innerText = state.streak;
             if(document.getElementById('p-power')) document.getElementById('p-power').innerText = state.multiLevel || 1;
             
-            const nextLevelGoal = 1000000; // Goal: 1 Million $TRU
+            // DYNAMIC COLOR, PROGRESS & GLOW
+            const nextLevelGoal = 1000000;
             const progress = Math.min(100, (state.balance / nextLevelGoal) * 100);
-            document.getElementById('lvl-fill').style.width = progress + "%";
+            const fill = document.getElementById('lvl-fill');
+            const label = document.getElementById('p-rank-label');
+            
+            fill.style.width = progress + "%";
             document.getElementById('p-progress-text').innerText = Math.floor(progress) + "%";
-            if(state.balance >= 1000000) document.getElementById('p-rank-label').innerText = "Legendary Tapper 💎";
+
+            if(state.balance < 50000) { fill.style.background = "var(--bronze)"; label.innerText = "Bronze Tapper"; fill.style.boxShadow = "0 0 10px var(--bronze)"; }
+            else if(state.balance < 250000) { fill.style.background = "var(--silver)"; label.innerText = "Silver Elite"; fill.style.boxShadow = "0 0 10px var(--silver)"; }
+            else if(state.balance < 1000000) { fill.style.background = "var(--gold)"; label.innerText = "Gold Master"; fill.style.boxShadow = "0 0 15px var(--gold)"; }
+            else { fill.style.background = "var(--accent)"; label.innerText = "Legendary Tapper 💎"; fill.style.boxShadow = "0 0 20px var(--accent)"; }
         }
 
         document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
@@ -254,23 +268,22 @@
             } else { btn.innerText = "CLAIM"; btn.style.background = "var(--accent)"; btn.disabled = false; }
         }
 
-        function doYouTubeMission(url, reward, btnId) {
+        // UNIVERSAL MISSION SYSTEM (CLICK -> WAIT -> CLAIM)
+        function doUniversalMission(url, reward, btnId) {
             if(state.completedTasks.includes(btnId)) return;
             const btn = document.getElementById(btnId);
             tg.openLink(url);
-            btn.innerText = "VERIFY (10s)"; btn.style.background = "#444"; btn.disabled = true;
-            let seconds = 10;
-            const timer = setInterval(() => {
-                seconds--; btn.innerText = `VERIFY (${seconds}s)`;
-                if (seconds <= 0) {
-                    clearInterval(timer); btn.innerText = "CLAIM"; btn.style.background = "var(--success)"; btn.disabled = false;
-                    btn.onclick = () => {
-                        state.balance += reward; state.completedTasks.push(btnId);
-                        btn.innerText = "DONE ✅"; btn.disabled = true; renderUI();
-                        db.ref('users/' + user.id).update({ balance: state.balance, completedTasks: state.completedTasks });
-                    };
-                }
-            }, 1000);
+            btn.innerText = "VERIFYING..."; btn.style.background = "#444"; btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerText = "CLAIM"; btn.style.background = "var(--success)"; btn.disabled = false;
+                btn.onclick = () => {
+                    state.balance += reward; state.completedTasks.push(btnId);
+                    btn.innerText = "DONE ✅"; btn.disabled = true; renderUI();
+                    db.ref('users/' + user.id).update({ balance: state.balance, completedTasks: state.completedTasks });
+                    tg.showAlert(`Successfully claimed ${reward.toLocaleString()} $TRU!`);
+                };
+            }, 7000);
         }
 
         function switchTab(t, el) {
@@ -284,6 +297,15 @@
             const now = Date.now(); if (now - state.lastDaily < 86400000) return;
             state.balance += dailyRewards[state.streak]; state.lastDaily = now; state.streak = (state.streak + 1) % 7;
             renderUI(); renderStreak(); db.ref('users/' + user.id).update({ balance: state.balance, lastDaily: state.lastDaily, streak: state.streak });
+        }
+
+        function renderStreak() {
+            const grid = document.getElementById('streak-grid');
+            if(!grid) return;
+            grid.innerHTML = dailyRewards.map((r, i) => {
+                let color = i < state.streak ? 'var(--success)' : (i === state.streak ? 'var(--accent)' : '#222');
+                return `<div style="text-align:center;"><div style="width:28px; height:28px; background:${color}; border-radius:50%; margin:0 auto; font-size:10px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:900;">${i+1}</div></div>`;
+            }).join('');
         }
 
         function loadLeaderboard() {
@@ -313,6 +335,11 @@
                     db.ref('users/' + user.id).update({ balance: state.balance, multiLevel: state.multiLevel }); renderUI();
                 }
             }
+        }
+
+        function saveBio() {
+            const val = document.getElementById('bio-input').value;
+            if(val) { state.bio = val; db.ref('users/' + user.id).update({ bio: val }); tg.showAlert("Bio updated!"); }
         }
 
         setInterval(() => { if(state.energy < 1000) { state.energy = Math.min(1000, state.energy + 2); renderUI(); } }, 3000);
